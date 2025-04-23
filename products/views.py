@@ -27,23 +27,21 @@ def listAllProducts(request):
 def createNewProduct(request):
     data: QueryDict = request.data
     tmp = {}
+
     tmp["name"] = data["name"]
     tmp["description"] = data["description"]
     tmp["image"] = data["image"]
-    tmp["category"] = [1]
     tmp["seller"] = request.user.id
-    tmp["product_status"] = 1
+    tmp["product_status"] = data["product_status"]
+    tmp["process_info"] = eval(data["process_info"])
+    tmp["address"] = eval(data["address"])
 
-    tmp["university_info"] = {
-        "faculty": "Oxford",
-        "name": "Oxford Street",
-        "year": 1825,
-    }
+    tmp["university_info"] = eval(data["university_info"])
 
     serializer = NewProductSerializer(data=tmp)
 
     if serializer.is_valid():
-        product = serializer.save()
+        serializer.save()
 
         return Response(serializer.data)
     else:

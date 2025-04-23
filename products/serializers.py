@@ -29,16 +29,15 @@ class CitySerializer(serializers.ModelSerializer):
     class Meta:
         model = City
         fields = "__all__"
+        extra_kwargs = {"name": {"read_only": True}}
 
 
 class AddressSerializer(serializers.ModelSerializer):
-    city = CitySerializer()
+    # city = CitySerializer()
 
     class Meta:
         model = Address
-        exclude = [
-            "id",
-        ]
+        exclude = ["id", "product"]
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -57,8 +56,6 @@ class ProductSerializer(serializers.ModelSerializer):
     address = AddressSerializer()
     process_info = ProcessInfoSerializer()
     university_info = UniversityInfoSerializer()
-
-    category = CategorySerializer(many=True)
 
     class Meta:
         model = Product
@@ -83,6 +80,8 @@ class NewProductSerializer(serializers.ModelSerializer):
     university_info = UniversityInfoSerializer(
         required=True,
     )
+    process_info = ProcessInfoSerializer(required=True)
+    address = AddressSerializer(required=True)
 
     class Meta:
         model = Product
@@ -90,18 +89,29 @@ class NewProductSerializer(serializers.ModelSerializer):
             "id",
             "product_status",
             "seller",
-            "category",
+            # "category",
+            "process_info",
             "name",
             "description",
             "image",
             "created_at",
             "updated_at",
             "university_info",
+            "address",
         ]
         extra_kwargs = {"seller": {"write_only": True}}
 
     def create(self, validated_data):
         university_info_data = validated_data.pop("university_info")
+        process_info_data = validated_data.pop("process_info")
+        address_data = validated_data.pop("address")
+
         product = Product.objects.create(**validated_data)
         UniversityInfo.objects.create(product=product, **university_info_data)
+        ProcessInfo.objects.create(product=product, **process_info_data)
+        Address.objects.create(
+            product=product,
+            city=City.objects.get(id=1),
+            rest=address_data["rest"],
+        )
         return product
