@@ -57,7 +57,9 @@ class Product(models.Model):
         related_name="product_buyer",
     )
 
-    category = models.ManyToManyField(Category, related_name="products")
+    category = models.ManyToManyField(
+        Category, related_name="products", null=True, blank=True
+    )
 
     name = models.CharField(max_length=150)
     description = models.CharField(max_length=200)

@@ -33,8 +33,6 @@ class CitySerializer(serializers.ModelSerializer):
 
 
 class AddressSerializer(serializers.ModelSerializer):
-    # city = CitySerializer()
-
     class Meta:
         model = Address
         exclude = ["id", "product"]
@@ -89,7 +87,7 @@ class NewProductSerializer(serializers.ModelSerializer):
             "id",
             "product_status",
             "seller",
-            # "category",
+            "category",
             "process_info",
             "name",
             "description",
@@ -101,12 +99,19 @@ class NewProductSerializer(serializers.ModelSerializer):
         ]
         extra_kwargs = {"seller": {"write_only": True}}
 
+    def validate(self, attrs):
+        print(str(attrs) + "sddsdosdjds")
+        return super().validate(attrs)
+
     def create(self, validated_data):
         university_info_data = validated_data.pop("university_info")
         process_info_data = validated_data.pop("process_info")
         address_data = validated_data.pop("address")
-
+        category_ids = validated_data.pop("category")
         product = Product.objects.create(**validated_data)
+
+        product.category.add(*category_ids)
+
         UniversityInfo.objects.create(product=product, **university_info_data)
         ProcessInfo.objects.create(product=product, **process_info_data)
         Address.objects.create(
@@ -114,4 +119,5 @@ class NewProductSerializer(serializers.ModelSerializer):
             city=City.objects.get(id=1),
             rest=address_data["rest"],
         )
+
         return product

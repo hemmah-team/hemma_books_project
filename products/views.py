@@ -35,14 +35,15 @@ def createNewProduct(request):
     tmp["product_status"] = data["product_status"]
     tmp["process_info"] = eval(data["process_info"])
     tmp["address"] = eval(data["address"])
-
+    tmp["category"] = eval(data["category"])
     tmp["university_info"] = eval(data["university_info"])
 
     serializer = NewProductSerializer(data=tmp)
 
     if serializer.is_valid():
         serializer.save()
+        data = serializer.data
 
-        return Response(serializer.data)
+        return Response(data)
     else:
         return Response(serializer.errors)
