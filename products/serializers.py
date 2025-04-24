@@ -73,6 +73,56 @@ class ProductSerializer(serializers.ModelSerializer):
             "university_info",
         ]
 
+    def update(self, instance, validated_data):
+        process_info_data = validated_data.pop("process_info", None)
+        university_info_data = validated_data.pop("university_info", None)
+        address_data = validated_data.pop("address", None)
+
+        instance.name = validated_data.get("name", instance.name)
+        instance.description = validated_data.get("description", instance.name)
+        instance.image = validated_data.get("image", instance.image)
+        instance.product_status = validated_data.get(
+            "product_status", instance.product_status
+        )
+
+        if process_info_data:
+            ProcessInfo.objects.filter(product=instance.id).update(**process_info_data)
+
+        if university_info_data:
+            UniversityInfo.objects.filter(product=instance.id).update(
+                **university_info_data
+            )
+
+        if address_data:
+            Address.objects.filter(product=instance.id).update(**address_data)
+
+        return instance
+
+
+class ProfileProductSerializer(serializers.ModelSerializer):
+    address = AddressSerializer()
+    process_info = ProcessInfoSerializer()
+    university_info = UniversityInfoSerializer()
+
+    class Meta:
+        model = Product
+        fields = [
+            "id",
+            "name",
+            "description",
+            "image",
+            "product_status",
+            "category",
+            "created_at",
+            "updated_at",
+            "product_status",
+            "category",
+            "address",
+            "is_pending",
+            "process_info",
+            "university_info",
+        ]
+
 
 class NewProductSerializer(serializers.ModelSerializer):
     university_info = UniversityInfoSerializer(
@@ -100,7 +150,6 @@ class NewProductSerializer(serializers.ModelSerializer):
         extra_kwargs = {"seller": {"write_only": True}}
 
     def validate(self, attrs):
-        print(str(attrs) + "sddsdosdjds")
         return super().validate(attrs)
 
     def create(self, validated_data):

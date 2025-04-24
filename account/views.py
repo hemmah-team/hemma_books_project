@@ -10,8 +10,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from account.models import User
+from products.models import Product
+from products.serializers import ProfileProductSerializer
 
-from .serializers import RegisterSerizalizer
+from .serializers import AccountSerializer, RegisterSerizalizer
 
 
 @api_view(["POST"])
@@ -37,23 +39,31 @@ def loginView(request):
     except:
         return Response(
             {
-                "message": "All Fields Must Be Entered.",
+                "detail": "All Fields Must Be Entered.",
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
     try:
-        user = User.objects.get(phone_number=phone, password=password)
+        user = User.objects.get(phone_number=phone)
+        isCorrect = user.check_password(password)
+        if not isCorrect:
+            return Response(
+                {"details": "Credentials Are Invalid."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
         if user.is_active is False:
             return Response(
                 {
-                    "message": "You Need To Verify The OTP At First.",
+                    "detail": "You Need To Verify The OTP At First.",
                 },
                 status=status.HTTP_401_UNAUTHORIZED,
             )
+
         if user.is_banned is True:
             return Response(
                 {
-                    "message": "Your Account Is Banned.",
+                    "detail": "Your Account Is Banned.",
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
@@ -63,10 +73,25 @@ def loginView(request):
     except:
         return Response(
             {
-                "message": "Credentials Are Invalid.",
+                "detail": "Credentials Are Invalid.",
             },
             status=status.HTTP_401_UNAUTHORIZED,
         )
+
+
+@api_view()
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def fetchProfileView(request):
+    tmp = {}
+    user = request.user
+    serializer1 = AccountSerializer(user)
+    tmp["profile"] = serializer1.data
+    products = Product.objects.filter(seller=user)
+    serializer2 = ProfileProductSerializer(products, many=True)
+    tmp["products"] = serializer2.data
+
+    return Response(tmp)
 
 
 @api_view(["POST"])
@@ -74,7 +99,32 @@ def loginView(request):
 @permission_classes([IsAuthenticated])
 def changeNumberView(request):
     new_phone_number = request.data["phone_number"]
-    user = User.objects.update(phone_number=request.user.phone_number)
-    # user.update(phone_number=new_phone_number)
+    user = User.objects.filter(id=request.user.id)
+    user.update(phone_number=new_phone_number)
 
-    return Response(str(new_phone_number))
+    return Response(AccountSerializer(User.objects.get(id=request.user.id)).data)
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def changePasswordView(request):
+    old_password = request.data["old_password"]
+    new_password = request.data["new_password"]
+
+    user = User.objects.get(id=request.user.id)
+
+    if old_password == new_password:
+        return Response(
+            {"detail": "The New Password Can't Be The Same As The Old One."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+    if user.check_password(old_password):
+        user.set_password(new_password)
+        user.save()
+        return Response({"detail": "Password Is Changed Successfully."})
+    else:
+        return Response(
+            {"detail": "The Old Password Is Incorrect."},
+            status=status.HTTP_401_UNAUTHORIZED,
+        )
