@@ -25,3 +25,9 @@ class AccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "name", "phone_number"]
+
+
+class AccountStaffSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "name", "phone_number", "is_banned"]

@@ -6,13 +6,18 @@ from rest_framework.decorators import (
     authentication_classes,
     permission_classes,
 )
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
 from permissions import BanPermission, VerificationPermission
 
 from .models import Product
-from .serializers import NewProductSerializer, ProductSerializer
+from .serializers import (
+    CategorySerializer,
+    NewProductSerializer,
+    ProductSerializer,
+    ProfileProductSerializer,
+)
 
 FIELDS1 = ["name", "description", "image", "product_status"]
 FIELDS2 = ["process_info", "address", "category", "university_info"]
@@ -22,8 +27,12 @@ FIELDS2 = ["process_info", "address", "category", "university_info"]
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
 def listAllProducts(request):
-    products = Product.objects.filter(is_pending=False)
-    ser = ProductSerializer(products, many=True)
+    if request.user.is_staff:
+        products = Product.objects.all()
+        ser = ProfileProductSerializer(products, many=True)
+    else:
+        products = Product.objects.filter(is_pending=False)
+        ser = ProductSerializer(products, many=True)
     return Response(ser.data)
 
 
@@ -55,7 +64,13 @@ def createNewProduct(request):
 
 @api_view(["PATCH"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
+@permission_classes(
+    [
+        IsAuthenticated,
+        BanPermission,
+        VerificationPermission,
+    ]
+)
 def editProduct(request, pk):
     data: QueryDict = request.data
     tmp = {}
@@ -68,10 +83,8 @@ def editProduct(request, pk):
         if data.get(key, None):
             tmp[key] = eval(data[key])
 
-    tmp["seller"] = request.user.id
-
     product = Product.objects.get(pk=pk)
-    if product.seller == request.user:
+    if product.seller == request.user or request.user.is_staff:
         if product.buyer is not None:
             return Response(
                 {
@@ -99,21 +112,23 @@ def editProduct(request, pk):
 @permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
 def deleteProduct(request, pk):
     product = Product.objects.get(id=pk)
-    if product.seller.id != request.user.id:
-        return Response(
-            {
-                "detail": "You Don't Have The Permission To Delete This Product.",
-            },
-            status=status.HTTP_401_UNAUTHORIZED,
-        )
+    if not request.user.is_staff:
+        if product.seller.id != request.user.id:
+            return Response(
+                {
+                    "detail": "You Don't Have The Permission To Delete This Product.",
+                },
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
 
-    if product.buyer is not None:
-        return Response(
-            {
-                "detail": "You Can't Delete This Product.",
-            },
-            status=status.HTTP_403_FORBIDDEN,
-        )
+        if product.buyer is not None:
+            return Response(
+                {
+                    "detail": "You Can't Delete This Product.",
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
     product.delete()
     return Response({"detail": "Product Has Been Deleted Successfully."})
 
@@ -126,7 +141,7 @@ def buyProduct(request, pk):
     if product.buyer is not None:
         return Response(
             {
-                "detail": "This Product Is Already Been Bought.",
+                "detail": "This Product Has Already Been Bought.",
             },
             status=status.HTTP_403_FORBIDDEN,
         )
@@ -139,6 +154,44 @@ def buyProduct(request, pk):
             status=status.HTTP_403_FORBIDDEN,
         )
 
+    if product.is_pending:
+        return Response(
+            {
+                "detail": "The Product Is Still In Pending.",
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
     product.buyer = request.user
     product.save()
     return Response({"detail": "Bought Successfully."})
+
+
+## ! Only Staff Users.
+
+
+@api_view()
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def approveProduct(request, pk):
+    try:
+        product = Product.objects.filter(id=pk)
+        product.update(is_pending=False)
+        return Response({"detail": "Approved Successfully."})
+
+    except Product.DoesNotExist:
+        return Response(
+            {"detail": "The Product Does Not Exist."}, status=status.HTTP_404_NOT_FOUND
+        )
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def createCategory(request):
+    serializer = CategorySerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    else:
+        return Response(serializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)

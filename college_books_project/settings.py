@@ -53,6 +53,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "college_books_project.urls"
 
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
