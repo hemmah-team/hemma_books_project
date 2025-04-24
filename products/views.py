@@ -9,6 +9,8 @@ from rest_framework.decorators import (
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from permissions import BanPermission, VerificationPermission
+
 from .models import Product
 from .serializers import NewProductSerializer, ProductSerializer
 
@@ -18,7 +20,7 @@ FIELDS2 = ["process_info", "address", "category", "university_info"]
 
 @api_view()
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
 def listAllProducts(request):
     products = Product.objects.filter(is_pending=False)
     ser = ProductSerializer(products, many=True)
@@ -27,7 +29,7 @@ def listAllProducts(request):
 
 @api_view(["POST"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
 def createNewProduct(request):
     data: QueryDict = request.data
     tmp = {}
@@ -53,7 +55,7 @@ def createNewProduct(request):
 
 @api_view(["PATCH"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
 def editProduct(request, pk):
     data: QueryDict = request.data
     tmp = {}
@@ -94,7 +96,7 @@ def editProduct(request, pk):
 
 @api_view(["DELETE"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
 def deleteProduct(request, pk):
     product = Product.objects.get(id=pk)
     if product.seller.id != request.user.id:
@@ -113,4 +115,30 @@ def deleteProduct(request, pk):
             status=status.HTTP_403_FORBIDDEN,
         )
     product.delete()
-    return Response("deleted su")
+    return Response({"detail": "Product Has Been Deleted Successfully."})
+
+
+@api_view()
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
+def buyProduct(request, pk):
+    product = Product.objects.get(id=pk)
+    if product.buyer is not None:
+        return Response(
+            {
+                "detail": "This Product Is Already Been Bought.",
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    if product.seller == request.user:
+        return Response(
+            {
+                "detail": "You Can't Buy Your Own Product.",
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    product.buyer = request.user
+    product.save()
+    return Response({"detail": "Bought Successfully."})

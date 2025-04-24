@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token
@@ -10,6 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from account.models import User
+from permissions import BanPermission, VerificationPermission
 from products.models import Product
 from products.serializers import ProfileProductSerializer
 
@@ -81,13 +83,13 @@ def loginView(request):
 
 @api_view()
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
 def fetchProfileView(request):
     tmp = {}
     user = request.user
     serializer1 = AccountSerializer(user)
     tmp["profile"] = serializer1.data
-    products = Product.objects.filter(seller=user)
+    products = Product.objects.filter(Q(seller=user) | Q(buyer=user))
     serializer2 = ProfileProductSerializer(products, many=True)
     tmp["products"] = serializer2.data
 
@@ -96,7 +98,7 @@ def fetchProfileView(request):
 
 @api_view(["POST"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
 def changeNumberView(request):
     new_phone_number = request.data["phone_number"]
     user = User.objects.filter(id=request.user.id)
@@ -107,7 +109,7 @@ def changeNumberView(request):
 
 @api_view(["POST"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
 def changePasswordView(request):
     old_password = request.data["old_password"]
     new_password = request.data["new_password"]

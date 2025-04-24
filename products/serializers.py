@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from account.serializers import AccountSerializer
+
 from .models import (
     Address,
     Category,
@@ -103,6 +105,8 @@ class ProfileProductSerializer(serializers.ModelSerializer):
     address = AddressSerializer()
     process_info = ProcessInfoSerializer()
     university_info = UniversityInfoSerializer()
+    seller = AccountSerializer()
+    buyer = AccountSerializer()
 
     class Meta:
         model = Product
@@ -121,6 +125,8 @@ class ProfileProductSerializer(serializers.ModelSerializer):
             "is_pending",
             "process_info",
             "university_info",
+            "seller",
+            "buyer",
         ]
 
 
