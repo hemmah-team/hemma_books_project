@@ -7,17 +7,23 @@ from .views import (
     listAllUsersView,
     loginView,
     registerView,
-    sendNotificationView,
-    toggleUserView,
+    sendOtpView,
+    sendPublicNotificationView,
+    toggleIsFeaturedView,
+    toggleUserBlockView,
+    verifyOtpView,
 )
 
 urlpatterns = [
     path("register/", registerView),
+    path("send_otp/", sendOtpView),
+    path("verify_otp/", verifyOtpView),
     path("login/", loginView),
     path("change_number/", changeNumberView),
     path("change_password/", changePasswordView),
     path("my_profile/", fetchProfileView),
     path("list_users/", listAllUsersView.as_view()),
-    path("toggle_block/<int:pk>/", toggleUserView),
-    path("send_notification/", sendNotificationView),
+    path("toggle_block/<int:pk>/", toggleUserBlockView),
+    path("toggle_featured/<int:pk>/", toggleIsFeaturedView),
+    path("send_notification/", sendPublicNotificationView),
 ]

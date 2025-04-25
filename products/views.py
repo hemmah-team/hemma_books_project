@@ -29,7 +29,7 @@ class ListAllProducts(ListAPIView):
     permission_classes = [IsAuthenticated, BanPermission, VerificationPermission]
     queryset = Product.objects.filter(is_pending=False, buyer=None)
 
-    serializer_class = ProfileProductSerializer
+    serializer_class = ProductSerializer
 
 
 @api_view(["POST"])

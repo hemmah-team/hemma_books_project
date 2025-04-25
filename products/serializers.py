@@ -73,6 +73,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "address",
             "process_info",
             "university_info",
+            "is_featured",
         ]
 
     def update(self, instance, validated_data):
