@@ -6,6 +6,7 @@ from rest_framework.decorators import (
     authentication_classes,
     permission_classes,
 )
+from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
@@ -23,17 +24,12 @@ FIELDS1 = ["name", "description", "image", "product_status"]
 FIELDS2 = ["process_info", "address", "category", "university_info"]
 
 
-@api_view()
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
-def listAllProducts(request):
-    if request.user.is_staff:
-        products = Product.objects.all()
-        ser = ProfileProductSerializer(products, many=True)
-    else:
-        products = Product.objects.filter(is_pending=False)
-        ser = ProductSerializer(products, many=True)
-    return Response(ser.data)
+class ListAllProducts(ListAPIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated, BanPermission, VerificationPermission]
+    queryset = Product.objects.filter(is_pending=False, buyer=None)
+
+    serializer_class = ProfileProductSerializer
 
 
 @api_view(["POST"])
@@ -164,6 +160,9 @@ def buyProduct(request, pk):
 
     product.buyer = request.user
     product.save()
+
+    ## TODO: SEND FCM NOTIFICATION
+
     return Response({"detail": "Bought Successfully."})
 
 
@@ -177,6 +176,9 @@ def approveProduct(request, pk):
     try:
         product = Product.objects.filter(id=pk)
         product.update(is_pending=False)
+
+        ## TODO: SEND FCM NOTIFICATION
+
         return Response({"detail": "Approved Successfully."})
 
     except Product.DoesNotExist:
@@ -195,3 +197,16 @@ def createCategory(request):
         return Response(serializer.data)
     else:
         return Response(serializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)
+
+
+class ListStaffProducts(ListAPIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [
+        IsAuthenticated,
+        BanPermission,
+        VerificationPermission,
+        IsAdminUser,
+    ]
+    queryset = Product.objects.all()
+
+    serializer_class = ProfileProductSerializer

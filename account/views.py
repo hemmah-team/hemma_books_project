@@ -7,6 +7,7 @@ from rest_framework.decorators import (
     authentication_classes,
     permission_classes,
 )
+from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
@@ -138,19 +139,20 @@ def changePasswordView(request):
 ## ! Only Staff Users.
 
 
-@api_view()
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated, IsAdminUser])
-def listAllUsersView(request):
-    users = User.objects.filter(is_verified=True, is_staff=False)
-    serializer = AccountStaffSerializer(users, many=True)
-    return Response(serializer.data)
+class listAllUsersView(ListAPIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [
+        IsAdminUser,
+    ]
+    queryset = User.objects.filter(is_verified=True, is_staff=False)
+
+    serializer_class = AccountStaffSerializer
 
 
 @api_view()
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, IsAdminUser])
-def blockUserView(request, pk):
+def toggleUserView(request, pk):
     try:
         user = User.objects.get(id=pk)
         user.is_banned = not user.is_banned
@@ -163,3 +165,11 @@ def blockUserView(request, pk):
         return Response(
             {"detail": "User Does Not Exist."}, status=status.HTTP_404_NOT_FOUND
         )
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def sendNotificationView(request):
+    ## TODO: SEND TOPIC NOTIFICATION
+    pass
