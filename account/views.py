@@ -18,8 +18,27 @@ from permissions import BanPermission, VerificationPermission
 from products.models import Product
 from products.serializers import ProfileProductSerializer
 
-from .models import Otp, User
-from .serializers import AccountSerializer, AccountStaffSerializer, RegisterSerizalizer
+from .models import Notification, Otp, User
+from .serializers import (
+    AccountSerializer,
+    AccountStaffSerializer,
+    NotificationSerializer,
+    RegisterSerizalizer,
+)
+
+
+@api_view(["POST"])
+def resetPasswordView(request):
+    phone_number = request.data["phone_number"]
+    try:
+        user = User.objects.get(phone_number=phone_number)
+        return sendOtp(user)
+
+    except User.DoesNotExist:
+        return Response(
+            {"detail": "This Phone Number Is Not Registered."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
 
 
 @api_view()
@@ -27,32 +46,7 @@ from .serializers import AccountSerializer, AccountStaffSerializer, RegisterSeri
 @authentication_classes([TokenAuthentication])
 def sendOtpView(request):
     user = request.user
-    try:
-        otp = Otp.objects.get(user=user)
-
-        otp_date = datetime.datetime(
-            year=otp.created_at.year,
-            month=otp.created_at.month,
-            day=otp.created_at.day,
-            hour=otp.created_at.hour + 3,
-            minute=otp.created_at.minute,
-            second=otp.created_at.second,
-        )
-        time_delta = datetime.datetime.now() - otp_date
-        print(time_delta.total_seconds())
-        if time_delta.total_seconds() > 120:
-            otp.delete()
-            return sendOtp(user)
-
-        else:
-            return Response(
-                {
-                    "detail": "You Have To Wait 2 Minutes Before Sending Another OTP.",
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
-    except Otp.DoesNotExist:
-        return sendOtp(user)
+    return sendOtp(user)
 
 
 @api_view(["POST"])
@@ -60,15 +54,25 @@ def sendOtpView(request):
 @authentication_classes([TokenAuthentication])
 def verifyOtpView(request):
     user = request.user
+    request_type = request.data["type"]
+    code = request.data["code"]
     try:
         otp_object = Otp.objects.get(user=user)
-        is_same = otp_object.code == request.data["code"]
+        is_same = otp_object.code == code
         if is_same:
             user_ob = User.objects.get(id=user.id)
-            user_ob.is_verified = True
+            res = {}
+            ## here either reset password or verify account
+            if request_type == "verify":
+                user_ob.is_verified = True
+                res["message"] = "The Account Has Been Verified Successfully."
+            if request_type == "reset":
+                user_ob.set_password(request.data["new_password"])
+                res["message"] = "You Have Reset The Password Successfully."
+
             user_ob.save()
             otp_object.delete()
-            return Response({"detail": "The Account Has Been Verified Successfully."})
+            return Response(res)
 
         else:
             return Response(
@@ -93,7 +97,12 @@ def registerView(request):
 
         return Response(tmp)
     else:
-        return Response(serializer.errors)
+        return Response(
+            {
+                "detail": "This Phone Number Already Exists.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
 
 @api_view(["POST"])
@@ -113,15 +122,7 @@ def loginView(request):
         isCorrect = user.check_password(password)
         if not isCorrect:
             return Response(
-                {"details": "Credentials Are Invalid."},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
-
-        if user.is_verified is False:
-            return Response(
-                {
-                    "detail": "You Need To Verify The OTP At First.",
-                },
+                {"detail": "Credentials Are Invalid."},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
@@ -134,7 +135,9 @@ def loginView(request):
             )
 
         token = Token.objects.get(user=user)
-        return Response({"name": user.name, "token": str(token)})
+        return Response(
+            {"name": user.name, "token": str(token), "is_verified": user.is_verified}
+        )
     except User.DoesNotExist:
         return Response(
             {
@@ -206,6 +209,18 @@ def changePasswordView(request):
         )
 
 
+@api_view()
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
+def fetchNotificationsView(request):
+    user = request.user
+    notifications = Notification.objects.filter(Q(user=None) | Q(user=user)).order_by(
+        "-id"
+    )
+    serializer = NotificationSerializer(notifications, many=True)
+    return Response(serializer.data)
+
+
 ## ! Only Staff Users.
 
 
@@ -246,10 +261,35 @@ def sendPublicNotificationView(request):
 
 
 def sendOtp(user):
-    ## TODO: send here otp via api
-    random_otp = str(random.randint(0, 99999)).zfill(5)
-    Otp.objects.create(code=random_otp, user=user)
-    return Response({"detail": "Sent OTP Successfully."})
+    try:
+        otp = Otp.objects.get(user=user)
+
+        otp_date = datetime.datetime(
+            year=otp.created_at.year,
+            month=otp.created_at.month,
+            day=otp.created_at.day,
+            hour=otp.created_at.hour + 3,
+            minute=otp.created_at.minute,
+            second=otp.created_at.second,
+        )
+        time_delta = datetime.datetime.now() - otp_date
+        if time_delta.total_seconds() > 120:
+            otp.delete()
+            random_otp = str(random.randint(0, 99999)).zfill(5)
+            Otp.objects.create(code=random_otp, user=user)
+            ## ! send actual otp here
+            return Response({"message": "Sent OTP Successfully."})
+        else:
+            return Response(
+                {
+                    "detail": "You Have To Wait 2 Minutes Before Sending Another OTP.",
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+    except Otp.DoesNotExist:
+        random_otp = str(random.randint(0, 99999)).zfill(5)
+        Otp.objects.create(code=random_otp, user=user)
+        return Response({"detail": "Sent OTP Successfully."})
 
 
 @api_view()

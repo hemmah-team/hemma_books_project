@@ -22,9 +22,7 @@ class UniversityInfoSerializer(serializers.ModelSerializer):
 class ProductStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductStatus
-        exclude = [
-            "id",
-        ]
+        fields = "__all__"
 
 
 class CitySerializer(serializers.ModelSerializer):
@@ -35,6 +33,14 @@ class CitySerializer(serializers.ModelSerializer):
 
 
 class AddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Address
+        exclude = ["id", "product"]
+
+
+class ExplicitAddressSerializer(serializers.ModelSerializer):
+    city = CitySerializer()
+
     class Meta:
         model = Address
         exclude = ["id", "product"]
@@ -69,7 +75,6 @@ class ProductSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "product_status",
-            "category",
             "address",
             "process_info",
             "university_info",
@@ -100,6 +105,32 @@ class ProductSerializer(serializers.ModelSerializer):
             Address.objects.filter(product=instance.id).update(**address_data)
 
         return instance
+
+
+class ExplicitProductSerializer(serializers.ModelSerializer):
+    address = ExplicitAddressSerializer()
+    process_info = ProcessInfoSerializer()
+    university_info = UniversityInfoSerializer()
+    category = CategorySerializer(many=True)
+    product_status = ProductStatusSerializer()
+
+    class Meta:
+        model = Product
+        fields = [
+            "id",
+            "name",
+            "description",
+            "image",
+            "product_status",
+            "category",
+            "created_at",
+            "updated_at",
+            "product_status",
+            "address",
+            "process_info",
+            "university_info",
+            "is_featured",
+        ]
 
 
 class ProfileProductSerializer(serializers.ModelSerializer):

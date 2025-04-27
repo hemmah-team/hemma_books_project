@@ -13,7 +13,9 @@ class City(models.Model):
 class Address(models.Model):
     city = models.ForeignKey(City, on_delete=models.CASCADE)
     rest = models.CharField(max_length=150)
-    product = models.OneToOneField("Product", on_delete=models.CASCADE)
+    product = models.OneToOneField(
+        "Product", on_delete=models.CASCADE, related_name="address"
+    )
 
     def __str__(self):
         return self.rest
@@ -71,12 +73,6 @@ class Product(models.Model):
 
     def __str__(self):
         return str(self.id)
-
-
-class Notification(models.Model):
-    title = models.CharField(max_length=30)
-    message = models.CharField(max_length=150)
-    created_at = models.DateTimeField(auto_now_add=True)
 
 
 class AppVersion(models.Model):

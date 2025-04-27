@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import User
+from .models import Notification, User
 
 
 class RegisterSerizalizer(serializers.ModelSerializer):
@@ -31,3 +31,9 @@ class AccountStaffSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "name", "phone_number", "is_banned"]
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        exclude = ["user"]

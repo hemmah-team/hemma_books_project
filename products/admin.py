@@ -6,7 +6,6 @@ from .models import (
     AppVersion,
     Category,
     City,
-    Notification,
     ProcessInfo,
     Product,
     ProductStatus,
@@ -21,6 +20,5 @@ admin.site.register(ProcessInfo)
 admin.site.register(UniversityInfo)
 admin.site.register(ProductStatus)
 admin.site.register(Product)
-admin.site.register(Notification)
 admin.site.register(AppVersion)
 admin.site.register(Category)

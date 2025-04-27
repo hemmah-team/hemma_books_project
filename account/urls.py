@@ -3,10 +3,12 @@ from django.urls import path
 from .views import (
     changeNumberView,
     changePasswordView,
+    fetchNotificationsView,
     fetchProfileView,
     listAllUsersView,
     loginView,
     registerView,
+    resetPasswordView,
     sendOtpView,
     sendPublicNotificationView,
     toggleIsFeaturedView,
@@ -16,6 +18,7 @@ from .views import (
 
 urlpatterns = [
     path("register/", registerView),
+    path("reset_password/", resetPasswordView),
     path("send_otp/", sendOtpView),
     path("verify_otp/", verifyOtpView),
     path("login/", loginView),
@@ -26,4 +29,5 @@ urlpatterns = [
     path("toggle_block/<int:pk>/", toggleUserBlockView),
     path("toggle_featured/<int:pk>/", toggleIsFeaturedView),
     path("send_notification/", sendPublicNotificationView),
+    path("notifications/", fetchNotificationsView),
 ]
