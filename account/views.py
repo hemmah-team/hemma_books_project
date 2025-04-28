@@ -50,10 +50,14 @@ def sendOtpView(request):
 
 
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])
 @authentication_classes([TokenAuthentication])
 def verifyOtpView(request):
-    user = request.user
+    try:
+        user = request.user
+        print(f"user is {user}")
+    except:
+        user = User.objects.get(phone_number=request.data["phone_number"])
+
     request_type = request.data["type"]
     code = request.data["code"]
     try:
