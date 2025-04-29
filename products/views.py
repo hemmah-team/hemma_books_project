@@ -90,7 +90,7 @@ def editProduct(request, pk):
         if product.buyer is not None:
             return Response(
                 {
-                    "detail": "You Can't Edit This Product.",
+                    "detail": "لا يمكنك تعديل هذا المنتج.",
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
@@ -103,7 +103,7 @@ def editProduct(request, pk):
     else:
         return Response(
             {
-                "detail": "You Don't Have The Permission To Edit This Product.",
+                "detail": "لا تملك الصلاحيات الكافية لتعديل هذا المنتج.",
             },
             status=status.HTTP_401_UNAUTHORIZED,
         )
@@ -118,7 +118,7 @@ def deleteProduct(request, pk):
         if product.seller.id != request.user.id:
             return Response(
                 {
-                    "detail": "You Don't Have The Permission To Delete This Product.",
+                    "detail": "لا تملك الصلاحيات الكافية لإزالة هذا المنتج.",
                 },
                 status=status.HTTP_401_UNAUTHORIZED,
             )
@@ -126,13 +126,13 @@ def deleteProduct(request, pk):
         if product.buyer is not None:
             return Response(
                 {
-                    "detail": "You Can't Delete This Product.",
+                    "detail": "لا يمكنك حذف هذا المنتج.",
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
 
     product.delete()
-    return Response({"detail": "Product Has Been Deleted Successfully."})
+    return Response({"detail": "تم حذف هذا المنتج بنجاح."})
 
 
 @api_view()
@@ -143,7 +143,7 @@ def buyProduct(request, pk):
     if product.buyer is not None:
         return Response(
             {
-                "detail": "This Product Has Already Been Bought.",
+                "detail": "تم شراء هذا المنتج مسبقاً.",
             },
             status=status.HTTP_403_FORBIDDEN,
         )
@@ -151,7 +151,7 @@ def buyProduct(request, pk):
     if product.seller == request.user:
         return Response(
             {
-                "detail": "You Can't Buy Your Own Product.",
+                "detail": "لا يمكنك شراء منتجك.",
             },
             status=status.HTTP_403_FORBIDDEN,
         )
@@ -159,7 +159,7 @@ def buyProduct(request, pk):
     if product.is_pending:
         return Response(
             {
-                "detail": "The Product Is Still In Pending.",
+                "detail": "المنتج ما زال في قائمة الانتظار.",
             },
             status=status.HTTP_403_FORBIDDEN,
         )
@@ -169,7 +169,7 @@ def buyProduct(request, pk):
 
     ## TODO: SEND FCM NOTIFICATION
 
-    return Response({"detail": "Bought Successfully."})
+    return Response({"detail": "تم شراء المنتج بنجاح."})
 
 
 @api_view()
@@ -267,11 +267,11 @@ def approveProduct(request, pk):
 
         ## TODO: SEND FCM NOTIFICATION
 
-        return Response({"detail": "Approved Successfully."})
+        return Response({"detail": "تم قبول المنتج بنجاح."})
 
     except Product.DoesNotExist:
         return Response(
-            {"detail": "The Product Does Not Exist."}, status=status.HTTP_404_NOT_FOUND
+            {"detail": "هذا المنتج غير موجود."}, status=status.HTTP_404_NOT_FOUND
         )
 
 

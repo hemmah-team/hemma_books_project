@@ -36,7 +36,7 @@ def resetPasswordView(request):
 
     except User.DoesNotExist:
         return Response(
-            {"detail": "This Phone Number Is Not Registered."},
+            {"detail": "هذا الرقم غير مسجل مسبقاً."},
             status=status.HTTP_404_NOT_FOUND,
         )
 
@@ -69,10 +69,10 @@ def verifyOtpView(request):
             ## here either reset password or verify account
             if request_type == "verify":
                 user_ob.is_verified = True
-                res["message"] = "The Account Has Been Verified Successfully."
+                res["message"] = "تم تفعيل هذا الحساب بنجاح."
             if request_type == "reset":
                 user_ob.set_password(request.data["new_password"])
-                res["message"] = "You Have Reset The Password Successfully."
+                res["message"] = "تمت إعادة ضبط كلمة المرور بنجاح."
 
             user_ob.save()
             otp_object.delete()
@@ -80,12 +80,12 @@ def verifyOtpView(request):
 
         else:
             return Response(
-                {"detail": "The OTP Code Is Wrong."},
+                {"detail": "الرمز خاطئ."},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
     except Otp.DoesNotExist:
         return Response(
-            {"detail": "Send An OTP First."}, status=status.HTTP_401_UNAUTHORIZED
+            {"detail": "أرسل الرمز أولاً."}, status=status.HTTP_401_UNAUTHORIZED
         )
 
 
@@ -103,7 +103,7 @@ def registerView(request):
     else:
         return Response(
             {
-                "detail": "This Phone Number Already Exists.",
+                "detail": "هذا الرقم مسجّل مسبقاً.",
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
@@ -117,7 +117,7 @@ def loginView(request):
     except KeyError:
         return Response(
             {
-                "detail": "All Fields Must Be Entered.",
+                "detail": "يجب إدخال جميع البيانات.",
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
@@ -126,14 +126,14 @@ def loginView(request):
         isCorrect = user.check_password(password)
         if not isCorrect:
             return Response(
-                {"detail": "Credentials Are Invalid."},
+                {"detail": "البيانات خاطئة."},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
         if user.is_banned is True:
             return Response(
                 {
-                    "detail": "Your Account Is Banned.",
+                    "detail": "حسابك محظور.",
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
@@ -145,7 +145,7 @@ def loginView(request):
     except User.DoesNotExist:
         return Response(
             {
-                "detail": "Credentials Are Invalid.",
+                "detail": "البيانات خاطئة.",
             },
             status=status.HTTP_401_UNAUTHORIZED,
         )
@@ -183,7 +183,7 @@ def changeNumberView(request):
         return Response(AccountSerializer(User.objects.get(id=request.user.id)).data)
     else:
         return Response(
-            {"detail": "The Password Is Incorrect."},
+            {"detail": "كلمة المرور خاطئة."},
             status=status.HTTP_401_UNAUTHORIZED,
         )
 
@@ -199,16 +199,16 @@ def changePasswordView(request):
 
     if old_password == new_password:
         return Response(
-            {"detail": "The New Password Can't Be The Same As The Old One."},
+            {"detail": "لا يمكن أن إدخال نفس كلمة المرور مرتين."},
             status=status.HTTP_403_FORBIDDEN,
         )
     if user.check_password(old_password):
         user.set_password(new_password)
         user.save()
-        return Response({"detail": "Password Is Changed Successfully."})
+        return Response({"detail": "تم تغيير كلمة المرور بنجاح."})
     else:
         return Response(
-            {"detail": "The Old Password Is Incorrect."},
+            {"detail": "كلمة المرور القديمة خاطئة."},
             status=status.HTTP_401_UNAUTHORIZED,
         )
 
@@ -247,12 +247,12 @@ def toggleUserBlockView(request, pk):
         user.is_banned = not user.is_banned
         user.save()
         if user.is_banned:
-            return Response({"detail": "User Has Been Banned Successfully."})
+            return Response({"detail": "تم حظر المستخدم بنجاح."})
         else:
-            return Response({"detail": "User Has Been Unbanned Successfully."})
+            return Response({"detail": "تم فك الحظر عن المستخدم بنجاح."})
     except User.DoesNotExist:
         return Response(
-            {"detail": "User Does Not Exist."}, status=status.HTTP_404_NOT_FOUND
+            {"detail": "المستخدم غير موجود."}, status=status.HTTP_404_NOT_FOUND
         )
 
 
@@ -282,18 +282,18 @@ def sendOtp(user):
             random_otp = str(random.randint(0, 99999)).zfill(5)
             Otp.objects.create(code=random_otp, user=user)
             ## ! send actual otp here
-            return Response({"message": "Sent OTP Successfully."})
+            return Response({"message": "تم إرسال الرمز بنجاح."})
         else:
             return Response(
                 {
-                    "detail": "You Have To Wait 2 Minutes Before Sending Another OTP.",
+                    "detail": "يجب عليك أن تنتظر دقيقتين قبل إرسال رمز آخر.",
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
     except Otp.DoesNotExist:
         random_otp = str(random.randint(0, 99999)).zfill(5)
         Otp.objects.create(code=random_otp, user=user)
-        return Response({"detail": "Sent OTP Successfully."})
+        return Response({"detail": "تم إرسال الرمز بنجاح."})
 
 
 @api_view()
@@ -305,14 +305,10 @@ def toggleIsFeaturedView(request, pk):
         product.is_featured = not product.is_featured
         product.save()
         if product.is_featured:
-            return Response(
-                {"detail": "Product Has Been Added To Featured Successfully."}
-            )
+            return Response({"detail": "تم إضافة المنتج إلى القائمة المميزة بنجاح."})
         else:
-            return Response(
-                {"detail": "Product Has Been Removed From Featured Successfully."}
-            )
+            return Response({"detail": "تم إزالة المنتج عن القائمة المميزة بنجاح."})
     except Product.DoesNotExist:
         return Response(
-            {"detail": "Product Does Not Exist."}, status=status.HTTP_404_NOT_FOUND
+            {"detail": "هذا المنتج غير موجود."}, status=status.HTTP_404_NOT_FOUND
         )
