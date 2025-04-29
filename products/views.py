@@ -51,6 +51,8 @@ def createNewProduct(request):
     for key in FIELDS2:
         tmp[key] = eval(data[key])
 
+    # print(tmp[city])
+
     serializer = NewProductSerializer(data=tmp)
 
     if serializer.is_valid():
