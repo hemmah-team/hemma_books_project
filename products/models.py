@@ -65,7 +65,7 @@ class Product(models.Model):
 
     name = models.CharField(max_length=150)
     description = models.CharField(max_length=200)
-    image = models.ImageField(upload_to="media")
+    image = models.ImageField(upload_to="media", null=True)
     is_pending = models.BooleanField(default=True)
     is_featured = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

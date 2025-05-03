@@ -25,7 +25,9 @@ from .serializers import (
     ProfileProductSerializer,
 )
 
+# FIELDS1 = ["name", "description", "product_status"]
 FIELDS1 = ["name", "description", "image", "product_status"]
+
 FIELDS2 = ["process_info", "address", "category", "university_info"]
 
 
@@ -41,6 +43,7 @@ class ListAllProducts(ListAPIView):
 @permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
 def createNewProduct(request):
     data: QueryDict = request.data
+    print(data)
     tmp = {}
 
     tmp["seller"] = request.user.id
@@ -49,9 +52,8 @@ def createNewProduct(request):
         tmp[key] = data[key]
 
     for key in FIELDS2:
-        tmp[key] = eval(data[key])
-
-    # print(tmp[city])
+        # tmp[key] = eval(data[key])
+        tmp[key] = data[key]
 
     serializer = NewProductSerializer(data=tmp)
 
@@ -61,7 +63,9 @@ def createNewProduct(request):
 
         return Response(data)
     else:
-        return Response(serializer.errors)
+        return Response(
+            serializer.errors,
+        )
 
 
 @api_view(["PATCH"])
@@ -99,7 +103,7 @@ def editProduct(request, pk):
             serializer.save()
             return Response(serializer.data)
         else:
-            return Response(serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     else:
         return Response(
             {

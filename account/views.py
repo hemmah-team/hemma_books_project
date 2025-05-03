@@ -54,8 +54,8 @@ def sendOtpView(request):
 def verifyOtpView(request):
     try:
         user = request.user
-        print(f"user is {user}")
-    except:
+        Token.objects.get(user=user)
+    except Token.DoesNotExist:
         user = User.objects.get(phone_number=request.data["phone_number"])
 
     request_type = request.data["type"]

@@ -1,3 +1,4 @@
+from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
 from account.serializers import AccountSerializer
@@ -168,6 +169,7 @@ class NewProductSerializer(serializers.ModelSerializer):
     )
     process_info = ProcessInfoSerializer(required=True)
     address = AddressSerializer(required=True)
+    image = Base64ImageField(required=False)
 
     class Meta:
         model = Product
