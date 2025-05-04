@@ -80,13 +80,14 @@ class ProductSerializer(serializers.ModelSerializer):
             "process_info",
             "university_info",
             "is_featured",
+            "pages",
         ]
 
     def update(self, instance, validated_data):
         process_info_data = validated_data.pop("process_info", None)
         university_info_data = validated_data.pop("university_info", None)
         address_data = validated_data.pop("address", None)
-
+        instance.pages = validated_data.get("pages", instance.pages)
         instance.name = validated_data.get("name", instance.name)
         instance.description = validated_data.get("description", instance.name)
         instance.image = validated_data.get("image", instance.image)
@@ -131,6 +132,7 @@ class ExplicitProductSerializer(serializers.ModelSerializer):
             "process_info",
             "university_info",
             "is_featured",
+            "pages",
         ]
 
 
@@ -160,6 +162,7 @@ class ProfileProductSerializer(serializers.ModelSerializer):
             "university_info",
             "seller",
             "buyer",
+            "pages",
         ]
 
 
@@ -186,6 +189,7 @@ class NewProductSerializer(serializers.ModelSerializer):
             "updated_at",
             "university_info",
             "address",
+            "pages",
         ]
         extra_kwargs = {"seller": {"write_only": True}}
 

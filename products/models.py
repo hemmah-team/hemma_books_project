@@ -18,7 +18,7 @@ class Address(models.Model):
     )
 
     def __str__(self):
-        return self.rest
+        return self.rest + " - " + str(self.product.id)
 
 
 class UniversityInfo(models.Model):
@@ -31,7 +31,7 @@ class UniversityInfo(models.Model):
     year = models.IntegerField()
 
     def __str__(self):
-        return self.name
+        return self.name + " - " + str(self.product.id)
 
 
 class ProductStatus(models.Model):
@@ -60,12 +60,14 @@ class Product(models.Model):
     )
 
     category = models.ManyToManyField(
-        Category, related_name="products", null=True, blank=True
+        Category,
+        related_name="products",
     )
 
     name = models.CharField(max_length=150)
     description = models.CharField(max_length=200)
-    image = models.ImageField(upload_to="media", null=True)
+    pages = models.IntegerField()
+    image = models.ImageField(upload_to="media")
     is_pending = models.BooleanField(default=True)
     is_featured = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -89,4 +91,4 @@ class ProcessInfo(models.Model):
     )
 
     def __str__(self):
-        return self.method
+        return self.method + " - " + str(self.product.id)

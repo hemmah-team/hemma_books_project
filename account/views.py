@@ -50,12 +50,23 @@ def sendOtpView(request):
 
 
 @api_view(["POST"])
+def checkPhoneNumberExistence(request):
+    try:
+        phone_number = request.data["phone_number"]
+        user = User.objects.get(phone_number=phone_number)
+        if user:
+            return Response()
+    except:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
 @authentication_classes([TokenAuthentication])
 def verifyOtpView(request):
     try:
         user = request.user
         Token.objects.get(user=user)
-    except Token.DoesNotExist:
+    except:
         user = User.objects.get(phone_number=request.data["phone_number"])
 
     request_type = request.data["type"]
@@ -267,15 +278,16 @@ def sendPublicNotificationView(request):
 def sendOtp(user):
     try:
         otp = Otp.objects.get(user=user)
-
         otp_date = datetime.datetime(
             year=otp.created_at.year,
             month=otp.created_at.month,
             day=otp.created_at.day,
-            hour=otp.created_at.hour + 3,
+            hour=otp.created_at.hour,
             minute=otp.created_at.minute,
             second=otp.created_at.second,
         )
+        print(otp_date)
+
         time_delta = datetime.datetime.now() - otp_date
         if time_delta.total_seconds() > 120:
             otp.delete()

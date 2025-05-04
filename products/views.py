@@ -26,7 +26,7 @@ from .serializers import (
 )
 
 # FIELDS1 = ["name", "description", "product_status"]
-FIELDS1 = ["name", "description", "image", "product_status"]
+FIELDS1 = ["name", "description", "image", "product_status", "pages"]
 
 FIELDS2 = ["process_info", "address", "category", "university_info"]
 

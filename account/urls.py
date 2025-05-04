@@ -3,6 +3,7 @@ from django.urls import path
 from .views import (
     changeNumberView,
     changePasswordView,
+    checkPhoneNumberExistence,
     fetchNotificationsView,
     fetchProfileView,
     listAllUsersView,
@@ -19,6 +20,7 @@ from .views import (
 urlpatterns = [
     path("register/", registerView),
     path("reset_password/", resetPasswordView),
+    path("check_phone_number/", checkPhoneNumberExistence),
     path("send_otp/", sendOtpView),
     path("verify_otp/", verifyOtpView),
     path("login/", loginView),
