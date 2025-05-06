@@ -209,7 +209,7 @@ class NewProductSerializer(serializers.ModelSerializer):
         ProcessInfo.objects.create(product=product, **process_info_data)
         Address.objects.create(
             product=product,
-            city=City.objects.get(id=1),
+            city=address_data["city"],
             rest=address_data["rest"],
         )
 

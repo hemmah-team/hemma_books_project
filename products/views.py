@@ -43,7 +43,6 @@ class ListAllProducts(ListAPIView):
 @permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
 def createNewProduct(request):
     data: QueryDict = request.data
-    print(data)
     tmp = {}
 
     tmp["seller"] = request.user.id
@@ -63,9 +62,7 @@ def createNewProduct(request):
 
         return Response(data)
     else:
-        return Response(
-            serializer.errors,
-        )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["PATCH"])

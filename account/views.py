@@ -28,25 +28,49 @@ from .serializers import (
 
 
 @api_view(["POST"])
-def resetPasswordView(request):
-    phone_number = request.data["phone_number"]
-    try:
-        user = User.objects.get(phone_number=phone_number)
-        return sendOtp(user)
-
-    except User.DoesNotExist:
+def sendOtpView(request):
+    phone_number = request.data.get("phone_number", None)
+    if phone_number is not None:
+        try:
+            user = User.objects.get(phone_number=phone_number)
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "رقم الهاتف غير مسجل مسبقاً."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+    else:
         return Response(
-            {"detail": "هذا الرقم غير مسجل مسبقاً."},
-            status=status.HTTP_404_NOT_FOUND,
+            {"detail": "يجب إرسال رقم الهاتف."}, status=status.HTTP_400_BAD_REQUEST
+        )
+    try:
+        otp = Otp.objects.get(user=user)
+        otp_date = datetime.datetime(
+            year=otp.created_at.year,
+            month=otp.created_at.month,
+            day=otp.created_at.day,
+            hour=otp.created_at.hour,
+            minute=otp.created_at.minute,
+            second=otp.created_at.second,
         )
 
-
-@api_view()
-@permission_classes([IsAuthenticated])
-@authentication_classes([TokenAuthentication])
-def sendOtpView(request):
-    user = request.user
-    return sendOtp(user)
+        time_delta = datetime.datetime.now() - otp_date
+        if time_delta.total_seconds() > 120:
+            otp.delete()
+            random_otp = str(random.randint(0, 99999)).zfill(5)
+            Otp.objects.create(code=random_otp, user=user)
+            ## ! send actual otp here
+            return Response({"detail": "تم إرسال رمز التحقق بنجاح."})
+        else:
+            return Response(
+                {
+                    "detail": "يجب عليك أن تنتظر دقيقتين قبل إرسال رمز تحقق آخر.",
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+    except Otp.DoesNotExist:
+        random_otp = str(random.randint(0, 99999)).zfill(5)
+        Otp.objects.create(code=random_otp, user=user)
+        return Response({"detail": "تم إرسال رمز التحقق بنجاح."})
 
 
 @api_view(["POST"])
@@ -63,11 +87,7 @@ def checkPhoneNumberExistence(request):
 @api_view(["POST"])
 @authentication_classes([TokenAuthentication])
 def verifyOtpView(request):
-    try:
-        user = request.user
-        Token.objects.get(user=user)
-    except:
-        user = User.objects.get(phone_number=request.data["phone_number"])
+    user = User.objects.get(phone_number=request.data["phone_number"])
 
     request_type = request.data["type"]
     code = request.data["code"]
@@ -80,23 +100,22 @@ def verifyOtpView(request):
             ## here either reset password or verify account
             if request_type == "verify":
                 user_ob.is_verified = True
-                res["message"] = "تم تفعيل هذا الحساب بنجاح."
+                res["detail"] = "تم تفعيل هذا الحساب بنجاح."
+                user_ob.save()
+                otp_object.delete()
             if request_type == "reset":
-                user_ob.set_password(request.data["new_password"])
-                res["message"] = "تمت إعادة ضبط كلمة المرور بنجاح."
+                res["detail"] = "رمز التحقق صحيح."
 
-            user_ob.save()
-            otp_object.delete()
             return Response(res)
 
         else:
             return Response(
-                {"detail": "الرمز خاطئ."},
+                {"detail": "رمز التحقق خاطئ."},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
     except Otp.DoesNotExist:
         return Response(
-            {"detail": "أرسل الرمز أولاً."}, status=status.HTTP_401_UNAUTHORIZED
+            {"detail": "أرسل رمز التحقق أولاً."}, status=status.HTTP_401_UNAUTHORIZED
         )
 
 
@@ -200,27 +219,54 @@ def changeNumberView(request):
 
 
 @api_view(["POST"])
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
-def changePasswordView(request):
-    old_password = request.data["old_password"]
+def changePasswordOrResetView(request):
+    ## ! only for change password
+    old_password = request.data.get("old_password", None)
+    ## ! only for resetting password
+    code = request.data.get("code", None)
+    ## ! common for both cases
     new_password = request.data["new_password"]
+    phone_number = request.data["phone_number"]
+    try:
+        user = User.objects.get(phone_number=phone_number)
 
-    user = User.objects.get(id=request.user.id)
+        ## changing password
+        if old_password is not None:
+            if old_password == new_password:
+                return Response(
+                    {"detail": "لا يمكن أن إدخال نفس كلمة المرور مرتين."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            if user.check_password(old_password):
+                user.set_password(new_password)
+                user.save()
+                return Response({"detail": "تم تغيير كلمة المرور بنجاح."})
+            else:
+                return Response(
+                    {"detail": "كلمة المرور القديمة خاطئة."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
 
-    if old_password == new_password:
+        ## resetting password
+        elif code is not None:
+            ## check if code is correct first
+            try:
+                otp = Otp.objects.get(code=code, user=user)
+                otp.delete()
+                user.set_password(new_password)
+                user.save()
+                return Response({"detail": "تم إعادة تعيين كلمة المرور بنجاح."})
+            except Otp.DoesNotExist:
+                return Response(
+                    {
+                        "detail": "رمز التحقق خاطئ.",
+                    },
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+    except User.DoesNotExist:
         return Response(
-            {"detail": "لا يمكن أن إدخال نفس كلمة المرور مرتين."},
-            status=status.HTTP_403_FORBIDDEN,
-        )
-    if user.check_password(old_password):
-        user.set_password(new_password)
-        user.save()
-        return Response({"detail": "تم تغيير كلمة المرور بنجاح."})
-    else:
-        return Response(
-            {"detail": "كلمة المرور القديمة خاطئة."},
-            status=status.HTTP_401_UNAUTHORIZED,
+            {"detail": "رقم الهاتف غير مسجل مسبقاً"}, status=status.HTTP_403_FORBIDDEN
         )
 
 
@@ -273,39 +319,6 @@ def toggleUserBlockView(request, pk):
 def sendPublicNotificationView(request):
     ## TODO: SEND TOPIC NOTIFICATION
     pass
-
-
-def sendOtp(user):
-    try:
-        otp = Otp.objects.get(user=user)
-        otp_date = datetime.datetime(
-            year=otp.created_at.year,
-            month=otp.created_at.month,
-            day=otp.created_at.day,
-            hour=otp.created_at.hour,
-            minute=otp.created_at.minute,
-            second=otp.created_at.second,
-        )
-        print(otp_date)
-
-        time_delta = datetime.datetime.now() - otp_date
-        if time_delta.total_seconds() > 120:
-            otp.delete()
-            random_otp = str(random.randint(0, 99999)).zfill(5)
-            Otp.objects.create(code=random_otp, user=user)
-            ## ! send actual otp here
-            return Response({"message": "تم إرسال الرمز بنجاح."})
-        else:
-            return Response(
-                {
-                    "detail": "يجب عليك أن تنتظر دقيقتين قبل إرسال رمز آخر.",
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
-    except Otp.DoesNotExist:
-        random_otp = str(random.randint(0, 99999)).zfill(5)
-        Otp.objects.create(code=random_otp, user=user)
-        return Response({"detail": "تم إرسال الرمز بنجاح."})
 
 
 @api_view()
