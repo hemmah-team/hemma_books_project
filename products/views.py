@@ -7,7 +7,7 @@ from rest_framework.decorators import (
     authentication_classes,
     permission_classes,
 )
-from rest_framework.generics import ListAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
@@ -35,6 +35,16 @@ class ListAllProducts(ListAPIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated, BanPermission, VerificationPermission]
     queryset = Product.objects.filter(is_pending=False, buyer=None)
+    serializer_class = ExplicitProductSerializer
+    pagination_class = PageNumberPagination
+
+
+class FetchSingleProduct(RetrieveAPIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated, BanPermission, VerificationPermission]
+    queryset = Product.objects.filter(
+        buyer=None,
+    )
     serializer_class = ExplicitProductSerializer
 
 
@@ -77,6 +87,7 @@ def createNewProduct(request):
 def editProduct(request, pk):
     data: QueryDict = request.data
     tmp = {}
+    print(data)
 
     for key in FIELDS1:
         if data.get(key, None):
@@ -84,7 +95,7 @@ def editProduct(request, pk):
 
     for key in FIELDS2:
         if data.get(key, None):
-            tmp[key] = eval(data[key])
+            tmp[key] = data[key]
 
     product = Product.objects.get(pk=pk)
     if product.seller == request.user or request.user.is_staff:
@@ -194,8 +205,12 @@ def getSettings(request):
 def filterView(request):
     data = request.data
     name = data.get("name", None)
+    pages = data.get("pages", None)
+
+    ## ! perhaps this is a useless filter
     description = data.get("description", None)
     category = data.get("category", None)
+    ## ! not yet implemented
     is_featured = data.get("is_featured", None)
 
     ## * Address Info
@@ -223,11 +238,11 @@ def filterView(request):
         filters &= Q(name__icontains=name)
     if description:
         filters &= Q(description__icontains=description)
-
+    if pages:
+        filters &= Q(pages=pages)
     if rest_address:
         filters &= Q(address__rest__icontains=rest_address)
-    if product_status is not None:
-        filters &= Q(product_status=product_status)
+
     if university_name:
         filters &= Q(university_info__name__icontains=university_name)
     if year:
@@ -235,8 +250,6 @@ def filterView(request):
     if faculty:
         filters &= Q(university_info__faculty__icontains=faculty)
 
-    if method:
-        filters &= Q(process_info__method=method)
     if duration:
         filters &= Q(process_info__duration__icontains=duration)
     if min_price is not None:
@@ -245,14 +258,35 @@ def filterView(request):
         filters &= Q(process_info__price__lte=max_price)
     if city is not None:
         filters &= Q(address__city=city)
+
     products = Product.objects.filter(filters) if filters else Product.objects.none()
 
     if category:
         for cat in category:
             products = products.filter(category=cat)
+
+    filters = Q()
+    if method:
+        for met in method:
+            filters |= Q(process_info__method=met)
+        products = products.filter(filters) if filters else Product.objects.none()
+        filters = Q()
+
+    if product_status:
+        for stat in product_status:
+            filters |= Q(product_status=stat)
+
+        products = products.filter(filters) if filters else Product.objects.none()
+
     paginator = PageNumberPagination()
-    results = paginator.paginate_queryset(products, request)
-    return paginator.get_paginated_response(ProductSerializer(results, many=True).data)
+    results = paginator.paginate_queryset(
+        products,
+        request,
+    )
+    res = paginator.get_paginated_response(
+        ExplicitProductSerializer(results, many=True).data,
+    )
+    return res
 
 
 ## ! Only Staff Users.
@@ -263,8 +297,14 @@ def filterView(request):
 @permission_classes([IsAuthenticated, IsAdminUser])
 def approveProduct(request, pk):
     try:
-        product = Product.objects.filter(id=pk)
-        product.update(is_pending=False)
+        product = Product.objects.get(id=pk)
+        if not product.is_pending:
+            return Response(
+                {"detail": "تم قبول هذا المنتج مسبقاً."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        product.is_pending = False
+        product.save()
 
         ## TODO: SEND FCM NOTIFICATION
 
@@ -296,6 +336,23 @@ class ListStaffProducts(ListAPIView):
         VerificationPermission,
         IsAdminUser,
     ]
-    queryset = Product.objects.all()
+    queryset = Product.objects.filter(
+        is_pending=False,
+    )
+
+    serializer_class = ProfileProductSerializer
+
+
+class ListStaffPendingProducts(ListAPIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [
+        IsAuthenticated,
+        BanPermission,
+        VerificationPermission,
+        IsAdminUser,
+    ]
+    queryset = Product.objects.filter(
+        is_pending=True,
+    )
 
     serializer_class = ProfileProductSerializer

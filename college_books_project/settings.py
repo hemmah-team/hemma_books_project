@@ -29,6 +29,7 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
     "cb39-138-199-35-122.ngrok-free.app",
     "hemmah.pythonanywhere.com",
+    "192.168.208.92",
 ]
 
 # Application definition
@@ -137,7 +138,7 @@ STATICFILES_DIRS = [
 
 # settings.py
 REST_FRAMEWORK = {
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    # "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.UserRateThrottle",

@@ -184,19 +184,32 @@ def loginView(request):
 @api_view()
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
-def fetchProfileView(request):
-    tmp = {}
-    user = request.user
-    serializer1 = AccountSerializer(user)
-    tmp["profile"] = serializer1.data
-    products = Product.objects.filter(Q(seller=user) | Q(buyer=user))
-    serializer2 = ProfileProductSerializer(
+def fetchMyProducts(request):
+    products = Product.objects.filter(Q(seller=request.user) | Q(buyer=request.user))
+    serializer = ProfileProductSerializer(
         products,
         many=True,
     )
-    tmp["products"] = serializer2.data
 
-    return Response(tmp)
+    return Response(serializer.data)
+
+
+# @api_view()
+# @authentication_classes([TokenAuthentication])
+# @permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
+# def fetchProfileView(request):
+#     tmp = {}
+#     user = request.user
+#     serializer1 = AccountSerializer(user)
+#     tmp["profile"] = serializer1.data
+#     products = Product.objects.filter(Q(seller=user) | Q(buyer=user))
+#     serializer2 = ProfileProductSerializer(
+#         products,
+#         many=True,
+#     )
+#     tmp["products"] = serializer2.data
+
+#     return Response(tmp)
 
 
 @api_view(["POST"])

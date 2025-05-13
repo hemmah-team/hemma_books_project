@@ -4,8 +4,8 @@ from .views import (
     changeNumberView,
     changePasswordOrResetView,
     checkPhoneNumberExistence,
+    fetchMyProducts,
     fetchNotificationsView,
-    fetchProfileView,
     listAllUsersView,
     loginView,
     registerView,
@@ -24,7 +24,7 @@ urlpatterns = [
     path("verify_otp/", verifyOtpView),
     path("change_number/", changeNumberView),
     path("change_password/", changePasswordOrResetView),
-    path("my_profile/", fetchProfileView),
+    path("my_products/", fetchMyProducts),
     path("notifications/", fetchNotificationsView),
     ## ! FOR STAFF ONLY.
     path("send_notification/", sendPublicNotificationView),

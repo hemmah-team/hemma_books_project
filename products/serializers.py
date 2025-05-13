@@ -87,14 +87,18 @@ class ProductSerializer(serializers.ModelSerializer):
         process_info_data = validated_data.pop("process_info", None)
         university_info_data = validated_data.pop("university_info", None)
         address_data = validated_data.pop("address", None)
+        category = validated_data.pop("category", None)
+
         instance.pages = validated_data.get("pages", instance.pages)
         instance.name = validated_data.get("name", instance.name)
-        instance.description = validated_data.get("description", instance.name)
+        instance.description = validated_data.get("description", instance.description)
         instance.image = validated_data.get("image", instance.image)
         instance.product_status = validated_data.get(
             "product_status", instance.product_status
         )
 
+        if category:
+            instance.category.set(category)
         if process_info_data:
             ProcessInfo.objects.filter(product=instance.id).update(**process_info_data)
 
@@ -106,6 +110,7 @@ class ProductSerializer(serializers.ModelSerializer):
         if address_data:
             Address.objects.filter(product=instance.id).update(**address_data)
 
+        instance.save()
         return instance
 
 
@@ -119,16 +124,16 @@ class ExplicitProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = [
+            "product_status",
+            "address",
             "id",
             "name",
             "description",
             "image",
-            "product_status",
             "category",
             "created_at",
             "updated_at",
             "product_status",
-            "address",
             "process_info",
             "university_info",
             "is_featured",
@@ -137,32 +142,34 @@ class ExplicitProductSerializer(serializers.ModelSerializer):
 
 
 class ProfileProductSerializer(serializers.ModelSerializer):
-    address = AddressSerializer()
+    address = ExplicitAddressSerializer()
     process_info = ProcessInfoSerializer()
     university_info = UniversityInfoSerializer()
+    category = CategorySerializer(many=True)
+    product_status = ProductStatusSerializer()
     seller = AccountSerializer()
     buyer = AccountSerializer()
 
     class Meta:
         model = Product
         fields = [
+            "product_status",
+            "address",
             "id",
             "name",
             "description",
             "image",
-            "product_status",
             "category",
             "created_at",
             "updated_at",
             "product_status",
-            "category",
-            "address",
-            "is_pending",
             "process_info",
             "university_info",
+            "is_featured",
+            "pages",
             "seller",
             "buyer",
-            "pages",
+            "is_pending",
         ]
 
 

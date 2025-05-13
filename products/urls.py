@@ -1,7 +1,9 @@
 from django.urls import path
 
 from .views import (
+    FetchSingleProduct,
     ListAllProducts,
+    ListStaffPendingProducts,
     ListStaffProducts,
     approveProduct,
     buyProduct,
@@ -14,8 +16,9 @@ from .views import (
 )
 
 urlpatterns = [
-    path("list/", ListAllProducts.as_view()),
     path("list_settings/", getSettings),
+    path("<int:pk>/", FetchSingleProduct.as_view()),
+    path("list/", ListAllProducts.as_view()),
     path("create/", createNewProduct),
     path("edit/<int:pk>/", editProduct),
     path("delete/<int:pk>/", deleteProduct),
@@ -25,4 +28,5 @@ urlpatterns = [
     path("approve/<int:pk>/", approveProduct),
     path("create_category/", createCategory),
     path("list_products_staff/", ListStaffProducts.as_view()),
+    path("list_pending_products/", ListStaffPendingProducts.as_view()),
 ]
