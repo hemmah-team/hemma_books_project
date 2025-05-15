@@ -1,7 +1,6 @@
 from django.urls import path
 
 from .views import (
-    FetchSingleProduct,
     ListAllProducts,
     ListStaffPendingProducts,
     ListStaffProducts,
@@ -11,13 +10,14 @@ from .views import (
     createNewProduct,
     deleteProduct,
     editProduct,
+    fetchSingleProduct,
     filterView,
     getSettings,
 )
 
 urlpatterns = [
     path("list_settings/", getSettings),
-    path("<int:pk>/", FetchSingleProduct.as_view()),
+    path("<int:pk>/", fetchSingleProduct),
     path("list/", ListAllProducts.as_view()),
     path("create/", createNewProduct),
     path("edit/<int:pk>/", editProduct),

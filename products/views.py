@@ -7,7 +7,7 @@ from rest_framework.decorators import (
     authentication_classes,
     permission_classes,
 )
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
@@ -34,18 +34,26 @@ FIELDS2 = ["process_info", "address", "category", "university_info"]
 class ListAllProducts(ListAPIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated, BanPermission, VerificationPermission]
-    queryset = Product.objects.filter(is_pending=False, buyer=None)
+    queryset = Product.objects.filter(is_pending=False, buyer=None).order_by(
+        "-created_at"
+    )
     serializer_class = ExplicitProductSerializer
     pagination_class = PageNumberPagination
 
 
-class FetchSingleProduct(RetrieveAPIView):
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated, BanPermission, VerificationPermission]
-    queryset = Product.objects.filter(
-        buyer=None,
-    )
-    serializer_class = ExplicitProductSerializer
+@api_view()
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
+def fetchSingleProduct(request, pk):
+    product = Product.objects.get(id=pk)
+    same_user = product.seller.phone_number == request.user.phone_number
+    if (product.buyer is not None) & (same_user is False):
+        return Response(
+            {"detail": "عذراً هذا المنتج غير متوفر."}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    serializer = ExplicitProductSerializer(product)
+    return Response(serializer.data)
 
 
 @api_view(["POST"])
@@ -87,7 +95,6 @@ def createNewProduct(request):
 def editProduct(request, pk):
     data: QueryDict = request.data
     tmp = {}
-    print(data)
 
     for key in FIELDS1:
         if data.get(key, None):
@@ -125,7 +132,12 @@ def editProduct(request, pk):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
 def deleteProduct(request, pk):
-    product = Product.objects.get(id=pk)
+    try:
+        product = Product.objects.get(id=pk)
+    except Product.DoesNotExist:
+        return Response(
+            {"detail": "هذا المنتج غير متوفر."}, status=status.HTTP_404_NOT_FOUND
+        )
     if not request.user.is_staff:
         if product.seller.id != request.user.id:
             return Response(
@@ -278,7 +290,10 @@ def filterView(request):
 
         products = products.filter(filters) if filters else Product.objects.none()
 
+    products = products.order_by("-created_at")
+
     paginator = PageNumberPagination()
+
     results = paginator.paginate_queryset(
         products,
         request,
@@ -338,9 +353,9 @@ class ListStaffProducts(ListAPIView):
     ]
     queryset = Product.objects.filter(
         is_pending=False,
-    )
-
+    ).order_by("-created_at")
     serializer_class = ProfileProductSerializer
+    pagination_class = PageNumberPagination
 
 
 class ListStaffPendingProducts(ListAPIView):
@@ -353,6 +368,7 @@ class ListStaffPendingProducts(ListAPIView):
     ]
     queryset = Product.objects.filter(
         is_pending=True,
-    )
+    ).order_by("-created_at")
+    pagination_class = PageNumberPagination
 
     serializer_class = ProfileProductSerializer
