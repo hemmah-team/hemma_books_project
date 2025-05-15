@@ -149,6 +149,7 @@ class UpdateProfileProductSerializer(serializers.ModelSerializer):
     product_status = ProductStatusSerializer(read_only=True)
     seller = AccountSerializer()
     buyer = AccountSerializer()
+    image = Base64ImageField()
 
     class Meta:
         model = Product
@@ -243,7 +244,7 @@ class NewProductSerializer(serializers.ModelSerializer):
     )
     process_info = ProcessInfoSerializer(required=True)
     address = AddressSerializer(required=True)
-    image = Base64ImageField(required=False)
+    image = Base64ImageField()
 
     class Meta:
         model = Product
