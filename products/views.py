@@ -20,9 +20,9 @@ from .serializers import (
     CitySerializer,
     ExplicitProductSerializer,
     NewProductSerializer,
-    ProductSerializer,
     ProductStatusSerializer,
     ProfileProductSerializer,
+    UpdateProfileProductSerializer,
 )
 
 # FIELDS1 = ["name", "description", "product_status"]
@@ -75,10 +75,10 @@ def createNewProduct(request):
     serializer = NewProductSerializer(data=tmp)
 
     if serializer.is_valid():
-        serializer.save()
-        data = serializer.data
+        obj = serializer.save()
+        ser = ProfileProductSerializer(obj)
 
-        return Response(data)
+        return Response(ser.data)
     else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -113,10 +113,11 @@ def editProduct(request, pk):
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
-        serializer = ProductSerializer(product, data=tmp, partial=True)
+        serializer = UpdateProfileProductSerializer(product, data=tmp, partial=True)
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
+            obj = serializer.save()
+            ser = ProfileProductSerializer(obj)
+            return Response(ser.data)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     else:
