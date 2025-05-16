@@ -29,15 +29,17 @@ from .serializers import (
 
 @api_view(["POST"])
 def sendOtpView(request):
+    ## new phone number
     phone_number = request.data.get("phone_number", None)
+
     if phone_number is not None:
         try:
             user = User.objects.get(phone_number=phone_number)
         except User.DoesNotExist:
-            return Response(
-                {"detail": "رقم الهاتف غير مسجل مسبقاً."},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
+            ## get from headers
+            token = Token.objects.get(key=request.headers["Authorization"][6:])
+            user = token.user
+
     else:
         return Response(
             {"detail": "يجب إرسال رقم الهاتف."}, status=status.HTTP_400_BAD_REQUEST
@@ -59,6 +61,8 @@ def sendOtpView(request):
             random_otp = str(random.randint(0, 99999)).zfill(5)
             Otp.objects.create(code=random_otp, user=user)
             ## ! send actual otp here
+            ## !!!!!!!!!!  send always to new phone number
+            ##### !!!!!!!!!!! to this (phone_number)
             return Response({"detail": "تم إرسال رمز التحقق بنجاح."})
         else:
             return Response(
@@ -80,17 +84,79 @@ def checkPhoneNumberExistence(request):
         user = User.objects.get(phone_number=phone_number)
         if user:
             return Response()
-    except:
+    except User.DoesNotExist:
         return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+def changeNameView(request):
+    name = request.data["name"]
+    phone_number = request.data["phone_number"]
+    password = request.data["password"]
+
+    try:
+        user = User.objects.get(
+            phone_number=phone_number,
+        )
+
+        if user.check_password(password):
+            user.name = name
+            user.save()
+            return Response({"detail": "تم تغيير الاسم بنجاح."})
+        else:
+            return Response(
+                {"detail": "كلمة المرور خاطئة."}, status=status.HTTP_401_UNAUTHORIZED
+            )
+    except User.DoesNotExist:
+        return Response(
+            {"detail": "رقم الهاتف غير مسجل مسبقاً."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
+def checkNewPhoneNumberExistence(request):
+    new_phone_number = request.data["new_phone_number"]
+    old_phone_number = request.data["old_phone_number"]
+    password = request.data["password"]
+
+    try:
+        user = User.objects.get(phone_number=old_phone_number)
+        if user.check_password(password):
+            try:
+                user = User.objects.get(phone_number=new_phone_number)
+                return Response(
+                    {"detail": "الرقم مستخدم مسبقاً."},
+                    status=status.HTTP_406_NOT_ACCEPTABLE,
+                )
+            except User.DoesNotExist:
+                return Response()
+        else:
+            return Response(
+                {"detail": "كلمة المرور خاطئة."}, status=status.HTTP_401_UNAUTHORIZED
+            )
+    except User.DoesNotExist:
+        return Response(
+            {"detail": "رقم الهاتف غير موجود."}, status=status.HTTP_403_FORBIDDEN
+        )
 
 
 @api_view(["POST"])
 @authentication_classes([TokenAuthentication])
 def verifyOtpView(request):
-    user = User.objects.get(phone_number=request.data["phone_number"])
-
     request_type = request.data["type"]
     code = request.data["code"]
+    phone_number = request.data["phone_number"]
+    # if request.auth is not None & request_type == "change_number":
+    #     print("dsjsdosdksjdsdjsd")
+    #     pass
+    try:
+        user = User.objects.get(phone_number=phone_number)
+    except User.DoesNotExist:
+        user = Token.objects.get(key=request.headers["Authorization"][6:]).user
+
     try:
         otp_object = Otp.objects.get(user=user)
         is_same = otp_object.code == code
@@ -105,6 +171,12 @@ def verifyOtpView(request):
                 otp_object.delete()
             if request_type == "reset":
                 res["detail"] = "رمز التحقق صحيح."
+
+            if request_type == "change_number":
+                user_ob.phone_number = phone_number
+                res["detail"] = "تم تغيير رقم الهاتف بنجاح."
+                user_ob.save()
+                otp_object.delete()
 
             return Response(res)
 
@@ -194,22 +266,14 @@ def fetchMyProducts(request):
     return Response(serializer.data)
 
 
-# @api_view()
-# @authentication_classes([TokenAuthentication])
-# @permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
-# def fetchProfileView(request):
-#     tmp = {}
-#     user = request.user
-#     serializer1 = AccountSerializer(user)
-#     tmp["profile"] = serializer1.data
-#     products = Product.objects.filter(Q(seller=user) | Q(buyer=user))
-#     serializer2 = ProfileProductSerializer(
-#         products,
-#         many=True,
-#     )
-#     tmp["products"] = serializer2.data
+@api_view()
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
+def fetchProfileView(request):
+    user = request.user
+    serializer1 = AccountSerializer(user)
 
-#     return Response(tmp)
+    return Response(serializer1.data)
 
 
 @api_view(["POST"])

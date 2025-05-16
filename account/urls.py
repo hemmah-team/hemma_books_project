@@ -1,11 +1,14 @@
 from django.urls import path
 
 from .views import (
+    changeNameView,
     changeNumberView,
     changePasswordOrResetView,
+    checkNewPhoneNumberExistence,
     checkPhoneNumberExistence,
     fetchMyProducts,
     fetchNotificationsView,
+    fetchProfileView,
     listAllUsersView,
     loginView,
     registerView,
@@ -20,12 +23,15 @@ urlpatterns = [
     path("register/", registerView),
     path("login/", loginView),
     path("check_phone_number/", checkPhoneNumberExistence),
+    path("check_new_phone_number/", checkNewPhoneNumberExistence),
+    path("change_name/", changeNameView),
     path("send_otp/", sendOtpView),
     path("verify_otp/", verifyOtpView),
     path("change_number/", changeNumberView),
     path("change_password/", changePasswordOrResetView),
     path("my_products/", fetchMyProducts),
     path("notifications/", fetchNotificationsView),
+    path("profile/", fetchProfileView),
     ## ! FOR STAFF ONLY.
     path("send_notification/", sendPublicNotificationView),
     path("list_users/", listAllUsersView.as_view()),

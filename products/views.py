@@ -95,7 +95,6 @@ def createNewProduct(request):
 def editProduct(request, pk):
     data: QueryDict = request.data
     tmp = {}
-
     for key in FIELDS1:
         if data.get(key, None):
             tmp[key] = data[key]
@@ -218,6 +217,8 @@ def getSettings(request):
 def filterView(request):
     data = request.data
     name = data.get("name", None)
+    sub_name = data.get("sub_name", None)
+
     pages = data.get("pages", None)
 
     ## ! perhaps this is a useless filter
@@ -271,6 +272,9 @@ def filterView(request):
         filters &= Q(process_info__price__lte=max_price)
     if city is not None:
         filters &= Q(address__city=city)
+
+    if sub_name is not None:
+        filters &= Q(name__icontains=sub_name)
 
     products = Product.objects.filter(filters) if filters else Product.objects.none()
 
