@@ -31,14 +31,40 @@ FIELDS1 = ["name", "description", "image", "product_status", "pages"]
 FIELDS2 = ["process_info", "address", "category", "university_info"]
 
 
-class ListAllProducts(ListAPIView):
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated, BanPermission, VerificationPermission]
-    queryset = Product.objects.filter(is_pending=False, buyer=None).order_by(
-        "-created_at"
+@api_view()
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
+def ListAllProducts(request):
+    querysetFeatured = Product.objects.filter(
+        is_pending=False, buyer=None, is_featured=True
+    ).order_by(
+        "-created_at",
+    )[:10]
+    querysetFree = Product.objects.filter(
+        is_pending=False, buyer=None, process_info__method="donate"
+    ).order_by(
+        "-created_at",
+    )[:10]
+
+    querysetPaid = Product.objects.filter(
+        is_pending=False, buyer=None, process_info__method="sell"
+    ).order_by(
+        "-created_at",
+    )[:10]
+
+    querysetLend = Product.objects.filter(
+        is_pending=False, buyer=None, process_info__method="lend"
+    ).order_by(
+        "-created_at",
+    )[:10]
+    ser1 = ExplicitProductSerializer(querysetFeatured, many=True)
+    ser2 = ExplicitProductSerializer(querysetFree, many=True)
+    ser3 = ExplicitProductSerializer(querysetPaid, many=True)
+    ser4 = ExplicitProductSerializer(querysetLend, many=True)
+
+    return Response(
+        {"featured": ser1.data, "free": ser2.data, "paid": ser3.data, "lend": ser4.data}
     )
-    serializer_class = ExplicitProductSerializer
-    pagination_class = PageNumberPagination
 
 
 @api_view()
@@ -220,11 +246,11 @@ def filterView(request):
     sub_name = data.get("sub_name", None)
 
     pages = data.get("pages", None)
+    order_by = data.get("order_by", "-created_at")
 
     ## ! perhaps this is a useless filter
     description = data.get("description", None)
     category = data.get("category", None)
-    ## ! not yet implemented
     is_featured = data.get("is_featured", None)
 
     ## * Address Info
@@ -295,7 +321,16 @@ def filterView(request):
 
         products = products.filter(filters) if filters else Product.objects.none()
 
-    products = products.order_by("-created_at")
+    if order_by == "d_price":
+        order_by = "-process_info__price"
+    if order_by == "a_price":
+        order_by = "process_info__price"
+    if order_by == "a_created_at":
+        order_by = "created_at"
+    if order_by == "d_created_at":
+        order_by = "-created_at"
+
+    products = products.order_by(order_by)
 
     paginator = PageNumberPagination()
 

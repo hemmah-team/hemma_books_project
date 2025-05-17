@@ -18,7 +18,7 @@ from .views import (
 urlpatterns = [
     path("list_settings/", getSettings),
     path("<int:pk>/", fetchSingleProduct),
-    path("list/", ListAllProducts.as_view()),
+    path("list/", ListAllProducts),
     path("create/", createNewProduct),
     path("edit/<int:pk>/", editProduct),
     path("delete/<int:pk>/", deleteProduct),

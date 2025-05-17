@@ -30,6 +30,7 @@ ALLOWED_HOSTS = [
     "cb39-138-199-35-122.ngrok-free.app",
     "hemmah.pythonanywhere.com",
     "192.168.208.92",
+    "192.168.231.92",
 ]
 
 # Application definition
