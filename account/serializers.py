@@ -7,6 +7,7 @@ class RegisterSerizalizer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
+            "email",
             "name",
             "password",
             "phone_number",
@@ -24,13 +25,13 @@ class RegisterSerizalizer(serializers.ModelSerializer):
 class AccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "name", "phone_number"]
+        fields = ["id", "name", "phone_number", "email"]
 
 
 class AccountStaffSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "name", "phone_number", "is_banned"]
+        fields = ["id", "name", "phone_number", "is_banned", "email"]
 
 
 class NotificationSerializer(serializers.ModelSerializer):
