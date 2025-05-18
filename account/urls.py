@@ -22,8 +22,8 @@ from .views import (
 urlpatterns = [
     path("register/", registerView),
     path("login/", loginView),
-    path("check_phone_number/", checkEmailExistence),
-    path("check_new_phone_number/", checkNewEmailExistence),
+    path("check_email/", checkEmailExistence),
+    path("check_new_email/", checkNewEmailExistence),
     path("change_name/", changeNameView),
     path("send_otp/", sendOtpView),
     path("verify_otp/", verifyOtpView),

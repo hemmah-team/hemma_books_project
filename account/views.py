@@ -30,11 +30,11 @@ from .serializers import (
 @api_view(["POST"])
 def sendOtpView(request):
     ## new phone number
-    phone_number = request.data.get("phone_number", None)
+    email = request.data.get("email", None)
 
-    if phone_number is not None:
+    if email is not None:
         try:
-            user = User.objects.get(phone_number=phone_number)
+            user = User.objects.get(email=email)
         except User.DoesNotExist:
             ## get from headers
             token = Token.objects.get(key=request.headers["Authorization"][6:])
@@ -42,7 +42,8 @@ def sendOtpView(request):
 
     else:
         return Response(
-            {"detail": "يجب إرسال رقم الهاتف."}, status=status.HTTP_400_BAD_REQUEST
+            {"detail": "يجب إرسال البريد الإلكتروني."},
+            status=status.HTTP_400_BAD_REQUEST,
         )
     try:
         otp = Otp.objects.get(user=user)
@@ -109,7 +110,38 @@ def changeNameView(request):
             )
     except User.DoesNotExist:
         return Response(
-            {"detail": "رقم الهاتف غير مسجل مسبقاً."},
+            {"detail": "البريد الإلكتروني غير مسجل مسبقاً."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+
+@api_view(["POST"])
+def changeNumberView(request):
+    phone_number = request.data["phone_number"]
+    email = request.data["email"]
+    password = request.data["password"]
+
+    try:
+        user = User.objects.get(
+            email=email,
+        )
+        if user.check_password(password):
+            try:
+                User.objects.get(phone_number=phone_number)
+                return Response(
+                    {"detail": "رقم الهاتف مستخدم مسبقاً."},
+                    status=status.HTTP_406_NOT_ACCEPTABLE,
+                )
+            except User.DoesNotExist:
+                return Response({"detail": "تم تغيير رقم الهاتف بنجاح."})
+        else:
+            return Response(
+                {"detail": "كلمة المرور خاطئة."}, status=status.HTTP_401_UNAUTHORIZED
+            )
+
+    except User.DoesNotExist:
+        return Response(
+            {"detail": "البريد الإلكتروني غير مسجل مسبقاً."},
             status=status.HTTP_403_FORBIDDEN,
         )
 
@@ -128,7 +160,7 @@ def checkNewEmailExistence(request):
             try:
                 user = User.objects.get(email=new_email)
                 return Response(
-                    {"detail": "الإيميل مستخدم مسبقاً."},
+                    {"detail": "البريد الإلكتروني مستخدم مسبقاً."},
                     status=status.HTTP_406_NOT_ACCEPTABLE,
                 )
             except User.DoesNotExist:
@@ -139,7 +171,7 @@ def checkNewEmailExistence(request):
             )
     except User.DoesNotExist:
         return Response(
-            {"detail": "الإيميل غير موجود."}, status=status.HTTP_403_FORBIDDEN
+            {"detail": "البريد الإلكتروني غير موجود."}, status=status.HTTP_403_FORBIDDEN
         )
 
 
@@ -172,9 +204,9 @@ def verifyOtpView(request):
             if request_type == "reset":
                 res["detail"] = "رمز التحقق صحيح."
 
-            if request_type == "change_number":
+            if request_type == "change_email":
                 user_ob.email = email
-                res["detail"] = "تم تغيير الإيميل بنجاح."
+                res["detail"] = "تم تغيير البريد الإلكتروني بنجاح."
                 user_ob.save()
                 otp_object.delete()
 
@@ -203,12 +235,23 @@ def registerView(request):
 
         return Response(tmp)
     else:
-        return Response(
-            {
-                "detail": "هذا الإيميل مسجّل مسبقاً.",
-            },
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+        email_error = serializer.errors.get("email")
+        phone_number_error = serializer.errors.get("phone_number")
+        if email_error is not None:
+            return Response(
+                {"detail": "هذا البريد الإلكتروني مسجّل مسبقاً."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        elif phone_number_error is not None:
+            return Response(
+                {"detail": "رقم الهاتف هذا مسجّل مسبقاً."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        else:
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 @api_view(["POST"])
@@ -242,7 +285,12 @@ def loginView(request):
 
         token = Token.objects.get(user=user)
         return Response(
-            {"name": user.name, "token": str(token), "is_verified": user.is_verified}
+            {
+                "name": user.name,
+                "token": str(token),
+                "is_verified": user.is_verified,
+                "phone_number": user.phone_number,
+            }
         )
     except User.DoesNotExist:
         return Response(
@@ -276,23 +324,23 @@ def fetchProfileView(request):
     return Response(serializer1.data)
 
 
-@api_view(["POST"])
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
-def changeNumberView(request):
-    new_phone_number = request.data["phone_number"]
-    password = request.data["password"]
-    user = User.objects.get(id=request.user.id)
-    if user.check_password(password):
-        user.phone_number = new_phone_number
-        user.save()
+# @api_view(["POST"])
+# @authentication_classes([TokenAuthentication])
+# @permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
+# def changeNumberView(request):
+#     new_phone_number = request.data["phone_number"]
+#     password = request.data["password"]
+#     user = User.objects.get(id=request.user.id)
+#     if user.check_password(password):
+#         user.phone_number = new_phone_number
+#         user.save()
 
-        return Response(AccountSerializer(User.objects.get(id=request.user.id)).data)
-    else:
-        return Response(
-            {"detail": "كلمة المرور خاطئة."},
-            status=status.HTTP_401_UNAUTHORIZED,
-        )
+#         return Response(AccountSerializer(User.objects.get(id=request.user.id)).data)
+#     else:
+#         return Response(
+#             {"detail": "كلمة المرور خاطئة."},
+#             status=status.HTTP_401_UNAUTHORIZED,
+#         )
 
 
 @api_view(["POST"])
@@ -343,7 +391,8 @@ def changePasswordOrResetView(request):
 
     except User.DoesNotExist:
         return Response(
-            {"detail": "الإيميل غير مسجل مسبقاً"}, status=status.HTTP_403_FORBIDDEN
+            {"detail": "البريد الإلكتروني غير مسجل مسبقاً"},
+            status=status.HTTP_403_FORBIDDEN,
         )
 
 

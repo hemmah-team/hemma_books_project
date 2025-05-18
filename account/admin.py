@@ -4,7 +4,7 @@ from .models import Notification, Otp, User
 
 
 class UserAdmin(admin.ModelAdmin):
-    list_display = ["phone_number"]
+    list_display = ["email", "phone_number", "name"]
 
 
 admin.site.register(User, UserAdmin)
