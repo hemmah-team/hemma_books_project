@@ -72,7 +72,7 @@ def ListAllProducts(request):
 @permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
 def fetchSingleProduct(request, pk):
     product = Product.objects.get(id=pk)
-    same_user = product.seller.phone_number == request.user.phone_number
+    same_user = product.seller.email == request.user.email
     if (product.buyer is not None) & (same_user is False):
         return Response(
             {"detail": "عذراً هذا المنتج غير متوفر."}, status=status.HTTP_404_NOT_FOUND
