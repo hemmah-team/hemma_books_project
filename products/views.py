@@ -329,6 +329,10 @@ def filterView(request):
         order_by = "created_at"
     if order_by == "d_created_at":
         order_by = "-created_at"
+    if order_by == "d_name":
+        order_by = "-name"
+    if order_by == "a_name":
+        order_by = "name"
 
     products = products.order_by(order_by)
 
