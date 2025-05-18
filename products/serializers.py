@@ -144,7 +144,7 @@ class ExplicitProductSerializer(serializers.ModelSerializer):
 class UpdateProfileProductSerializer(serializers.ModelSerializer):
     address = AddressSerializer()
     process_info = ProcessInfoSerializer()
-    university_info = UniversityInfoSerializer()
+    university_info = UniversityInfoSerializer(allow_null=True)
     category = CategorySerializer(many=True, read_only=True)
     product_status = ProductStatusSerializer(read_only=True)
     seller = AccountSerializer()
@@ -174,10 +174,8 @@ class UpdateProfileProductSerializer(serializers.ModelSerializer):
         ]
 
     def update(self, instance, validated_data):
-        print(str(validated_data) + "Ffdfdf")
-
         process_info_data = validated_data.pop("process_info", None)
-        university_info_data = validated_data.pop("university_info", None)
+        university_info_data = validated_data.pop("university_info", "None")
         address_data = validated_data.pop("address", None)
         category = validated_data.pop("category", None)
 
@@ -194,11 +192,25 @@ class UpdateProfileProductSerializer(serializers.ModelSerializer):
         if process_info_data:
             ProcessInfo.objects.filter(product=instance.id).update(**process_info_data)
 
-        if university_info_data:
-            UniversityInfo.objects.filter(product=instance.id).update(
-                **university_info_data
-            )
+        if university_info_data is not None:
+            if university_info_data != "None":
+                try:
+                    t = UniversityInfo.objects.get(product=instance)
+                    t.name = university_info_data["name"]
+                    t.faculty = university_info_data["faculty"]
+                    t.year = university_info_data["year"]
+                    t.save()
+                except:
+                    mod = UniversityInfo(product=instance, **university_info_data)
+                    mod.save()
 
+        try:
+            if university_info_data is None:
+                ob = UniversityInfo.objects.get(product=instance.id)
+                ob.delete()
+
+        except:
+            pass
         if address_data:
             Address.objects.filter(product=instance.id).update(**address_data)
 
@@ -239,12 +251,10 @@ class ProfileProductSerializer(serializers.ModelSerializer):
 
 
 class NewProductSerializer(serializers.ModelSerializer):
-    university_info = UniversityInfoSerializer(
-        required=True,
-    )
+    university_info = UniversityInfoSerializer(required=False, allow_null=True)
     process_info = ProcessInfoSerializer(required=True)
     address = AddressSerializer(required=True)
-    image = Base64ImageField()
+    image = Base64ImageField(required=True)
 
     class Meta:
         model = Product
@@ -263,18 +273,24 @@ class NewProductSerializer(serializers.ModelSerializer):
             "address",
             "pages",
         ]
-        extra_kwargs = {"seller": {"write_only": True}}
+        extra_kwargs = {
+            "seller": {"write_only": True},
+        }
 
     def create(self, validated_data):
-        university_info_data = validated_data.pop("university_info")
+        university_info_data = validated_data.pop(
+            "university_info",
+            None,
+        )
+
         process_info_data = validated_data.pop("process_info")
         address_data = validated_data.pop("address")
         category_ids = validated_data.pop("category")
         product = Product.objects.create(**validated_data)
 
         product.category.add(*category_ids)
-
-        UniversityInfo.objects.create(product=product, **university_info_data)
+        if university_info_data is not None:
+            UniversityInfo.objects.create(product=product, **university_info_data)
         ProcessInfo.objects.create(product=product, **process_info_data)
         Address.objects.create(
             product=product,

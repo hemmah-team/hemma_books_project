@@ -96,7 +96,10 @@ def createNewProduct(request):
 
     for key in FIELDS2:
         # tmp[key] = eval(data[key])
-        tmp[key] = data[key]
+        try:
+            tmp[key] = data[key]
+        except KeyError:
+            pass
 
     serializer = NewProductSerializer(data=tmp)
 
@@ -126,8 +129,11 @@ def editProduct(request, pk):
             tmp[key] = data[key]
 
     for key in FIELDS2:
-        if data.get(key, None):
+        try:
             tmp[key] = data[key]
+
+        except KeyError:
+            pass
 
     product = Product.objects.get(pk=pk)
     if product.seller == request.user or request.user.is_staff:
@@ -141,6 +147,7 @@ def editProduct(request, pk):
         serializer = UpdateProfileProductSerializer(product, data=tmp, partial=True)
         if serializer.is_valid():
             obj = serializer.save()
+
             ser = ProfileProductSerializer(obj)
             return Response(ser.data)
         else:

@@ -23,7 +23,9 @@ class Address(models.Model):
 
 class UniversityInfo(models.Model):
     product = models.OneToOneField(
-        "Product", on_delete=models.CASCADE, related_name="university_info"
+        "Product",
+        on_delete=models.CASCADE,
+        related_name="university_info",
     )
 
     name = models.CharField(max_length=50)

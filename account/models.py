@@ -92,7 +92,7 @@ class User(AbstractUser):
     ]
 
     def __str__(self):
-        return self.name + self.email
+        return self.email
 
 
 class Otp(models.Model):
