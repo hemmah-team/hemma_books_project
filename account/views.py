@@ -276,23 +276,23 @@ def fetchProfileView(request):
     return Response(serializer1.data)
 
 
-# @api_view(["POST"])
-# @authentication_classes([TokenAuthentication])
-# @permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
-# def changeNumberView(request):
-#     new_phone_number = request.data["phone_number"]
-#     password = request.data["password"]
-#     user = User.objects.get(id=request.user.id)
-#     if user.check_password(password):
-#         user.phone_number = new_phone_number
-#         user.save()
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
+def changeNumberView(request):
+    new_phone_number = request.data["phone_number"]
+    password = request.data["password"]
+    user = User.objects.get(id=request.user.id)
+    if user.check_password(password):
+        user.phone_number = new_phone_number
+        user.save()
 
-#         return Response(AccountSerializer(User.objects.get(id=request.user.id)).data)
-#     else:
-#         return Response(
-#             {"detail": "كلمة المرور خاطئة."},
-#             status=status.HTTP_401_UNAUTHORIZED,
-#         )
+        return Response(AccountSerializer(User.objects.get(id=request.user.id)).data)
+    else:
+        return Response(
+            {"detail": "كلمة المرور خاطئة."},
+            status=status.HTTP_401_UNAUTHORIZED,
+        )
 
 
 @api_view(["POST"])
