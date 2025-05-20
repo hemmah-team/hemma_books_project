@@ -14,11 +14,12 @@ from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
+from firebase_messaging import sendPublicMessage
 from permissions import BanPermission, VerificationPermission
 from products.models import Product
 from products.serializers import ProfileProductSerializer
 
-from .models import Notification, Otp, User
+from .models import Fcm, Notification, Otp, User
 from .serializers import (
     AccountSerializer,
     AccountStaffSerializer,
@@ -259,6 +260,8 @@ def loginView(request):
     try:
         email = request.data["email"]
         password = request.data["password"]
+        fcm = request.data["fcm"]
+
     except KeyError:
         return Response(
             {
@@ -284,6 +287,14 @@ def loginView(request):
             )
 
         token = Token.objects.get(user=user)
+        ## change fcm
+        try:
+            Fcm.objects.filter(token=fcm).delete()
+        except Fcm.DoesNotExist:
+            pass
+        finally:
+            Fcm.objects.create(user=user, token=fcm)
+
         return Response(
             {
                 "name": user.name,
@@ -444,7 +455,8 @@ def toggleUserBlockView(request, pk):
 @permission_classes([IsAuthenticated, IsAdminUser])
 def sendPublicNotificationView(request):
     ## TODO: SEND TOPIC NOTIFICATION
-    pass
+    sendPublicMessage(message="test", title="titletest")
+    return Response()
 
 
 @api_view()

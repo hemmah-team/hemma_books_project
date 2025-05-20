@@ -12,6 +12,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
+from firebase_messaging import sendMessage
 from permissions import BanPermission, VerificationPermission
 
 from .models import Category, City, Product, ProductStatus
@@ -225,6 +226,7 @@ def buyProduct(request, pk):
     product.save()
 
     ## TODO: SEND FCM NOTIFICATION
+    sendMessage(buyer_user=request.user, seller_user=product.seller, product=product)
 
     return Response({"detail": "تم شراء المنتج بنجاح."})
 
@@ -373,6 +375,12 @@ def approveProduct(request, pk):
         product.save()
 
         ## TODO: SEND FCM NOTIFICATION
+        sendMessage(
+            buyer_user=request.user,
+            seller_user=product.seller,
+            product=product,
+            isApprove=True,
+        )
 
         return Response({"detail": "تم قبول المنتج بنجاح."})
 

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Notification, Otp, User
+from .models import Fcm, Notification, Otp, User
 
 
 class UserAdmin(admin.ModelAdmin):
@@ -9,4 +9,5 @@ class UserAdmin(admin.ModelAdmin):
 
 admin.site.register(User, UserAdmin)
 admin.site.register(Otp)
+admin.site.register(Fcm)
 admin.site.register(Notification)

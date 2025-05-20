@@ -9,7 +9,6 @@ class UserManager(BaseUserManager):
         name,
         password,
         phone_number,
-        fcm,
         is_verified,
         is_banned,
         is_staff=False,
@@ -29,7 +28,6 @@ class UserManager(BaseUserManager):
         user = self.model(email=email)
         user.name = name
         user.phone_number = phone_number
-        user.fcm = fcm
         user.is_active = is_verified
         user.is_banned = is_banned
         user.is_staff = is_staff
@@ -51,7 +49,6 @@ class UserManager(BaseUserManager):
     ) -> "User":
         user = self.create_user(
             email=email,
-            fcm=fcm,
             is_verified=is_verified,
             is_banned=is_banned,
             is_staff=True,
@@ -73,7 +70,7 @@ class User(AbstractUser):
     name = models.CharField(max_length=50)
     password = models.CharField(max_length=200)
     phone_number = models.CharField(max_length=10, unique=True)
-    fcm = models.CharField(max_length=200)
+    # fcm = models.CharField(max_length=200)
     is_verified = models.BooleanField(default=False)
     is_banned = models.BooleanField(default=False)
     username = None
@@ -86,7 +83,6 @@ class User(AbstractUser):
         "phone_number",
         "name",
         "password",
-        "fcm",
         "is_verified",
         "is_banned",
     ]
@@ -118,3 +114,11 @@ class Notification(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Fcm(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="fcms")
+    token = models.CharField(max_length=300)
+
+    def __str__(self):
+        return self.user.email
