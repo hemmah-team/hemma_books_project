@@ -31,6 +31,7 @@ ALLOWED_HOSTS = [
     "hemmah.pythonanywhere.com",
     "192.168.208.92",
     "192.168.231.92",
+    "192.168.45.92",
 ]
 
 # Application definition
@@ -127,15 +128,16 @@ USE_TZ = False
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = "media/"
+# STATICFILES_DIRS = [
+#     BASE_DIR / "media",
+# ]
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "account.User"
-STATICFILES_DIRS = [
-    BASE_DIR / "media",
-]
 
 # settings.py
 REST_FRAMEWORK = {
@@ -156,5 +158,3 @@ STORAGES = {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
-
-STATIC_ROOT = BASE_DIR / "staticfiles"

@@ -1,7 +1,7 @@
 import firebase_admin
 from firebase_admin import credentials, messaging
 
-from account.models import User
+from account.models import Notification, User
 from products.models import Product
 
 token = {
@@ -47,6 +47,7 @@ def sendMessage(
             )
 
             messaging.send(message)
+        Notification.objects.create(title="طلب", message=m, user=seller_user)
 
 
 def sendPublicMessage(message: str, title: str):
@@ -59,3 +60,4 @@ def sendPublicMessage(message: str, title: str):
     )
 
     messaging.send(message)
+    Notification.objects.create(title="طلب", message=message)
