@@ -346,6 +346,9 @@ def filterView(request):
     products = products.order_by(order_by)
 
     paginator = PageNumberPagination()
+    page_size_query = request.query_params.get("page_size", None)
+    if page_size_query:
+        paginator.page_size = page_size_query
 
     results = paginator.paginate_queryset(
         products,

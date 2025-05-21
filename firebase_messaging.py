@@ -51,7 +51,7 @@ def sendMessage(
 
 
 def sendPublicMessage(message: str, title: str):
-    message = messaging.Message(
+    messag = messaging.Message(
         notification=messaging.Notification(
             title=title,
             body=message,
@@ -59,5 +59,5 @@ def sendPublicMessage(message: str, title: str):
         topic="public",
     )
 
-    messaging.send(message)
+    messaging.send(messag)
     Notification.objects.create(title="طلب", message=message)
