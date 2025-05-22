@@ -33,14 +33,16 @@ def sendMessage(
     isApprove: bool = False,
 ):
     if isApprove:
-        m = f"تم قبول منتجك ({product.name})"
+        m = f"لقد تم مراجعة والموافقة على منتجك ({product.name}). يمكنك الآن رؤيته متاحًا للجميع في متجرنا!"
+
     else:
         m = f"تم طلب منتجك ({product.name})"
+        m = f"قام ({product.buyer.name}) بـ (شراء/استعارة/الحصول على) منتجك ({product.name}). يرجى التواصل معه لتنسيق التسليم."
     for fcm in seller_user.fcms.all():
         if fcm:
             message = messaging.Message(
                 notification=messaging.Notification(
-                    title="تهانينا",
+                    title="خبر رائع!",
                     body=m,
                 ),
                 token=fcm.token,

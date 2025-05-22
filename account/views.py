@@ -43,7 +43,7 @@ def sendOtpView(request):
 
     else:
         return Response(
-            {"detail": "يجب إرسال البريد الإلكتروني."},
+            {"detail": "يرجى إدخال البريد الإلكتروني."},
             status=status.HTTP_400_BAD_REQUEST,
         )
     try:
@@ -65,18 +65,20 @@ def sendOtpView(request):
             ## ! send actual otp here
             ## !!!!!!!!!!  send always to new phone number
             ##### !!!!!!!!!!! to this (phone_number)
-            return Response({"detail": "تم إرسال رمز التحقق بنجاح."})
+            return Response(
+                {"detail": "تم إرسال رمز التحقق إلى بريدك الإلكتروني بنجاح."}
+            )
         else:
             return Response(
                 {
-                    "detail": "يجب عليك أن تنتظر دقيقتين قبل إرسال رمز تحقق آخر.",
+                    "detail": "يرجى الانتظار دقيقتين قبل طلب رمز تحقق جديد.",
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
     except Otp.DoesNotExist:
         random_otp = str(random.randint(0, 99999)).zfill(5)
         Otp.objects.create(code=random_otp, user=user)
-        return Response({"detail": "تم إرسال رمز التحقق بنجاح."})
+        return Response({"detail": "تم إرسال رمز التحقق إلى بريدك الإلكتروني بنجاح."})
 
 
 @api_view(["POST"])
@@ -107,11 +109,12 @@ def changeNameView(request):
             return Response({"detail": "تم تغيير الاسم بنجاح."})
         else:
             return Response(
-                {"detail": "كلمة المرور خاطئة."}, status=status.HTTP_401_UNAUTHORIZED
+                {"detail": "كلمة المرور غير صحيحة."},
+                status=status.HTTP_401_UNAUTHORIZED,
             )
     except User.DoesNotExist:
         return Response(
-            {"detail": "البريد الإلكتروني غير مسجل مسبقاً."},
+            {"detail": "البريد الإلكتروني غير مسجّل لدينا."},
             status=status.HTTP_403_FORBIDDEN,
         )
 
@@ -130,19 +133,20 @@ def changeNumberView(request):
             try:
                 User.objects.get(phone_number=phone_number)
                 return Response(
-                    {"detail": "رقم الهاتف مستخدم مسبقاً."},
+                    {"detail": "رقم الهاتف مُستخدم بالفعل."},
                     status=status.HTTP_406_NOT_ACCEPTABLE,
                 )
             except User.DoesNotExist:
-                return Response({"detail": "تم تغيير رقم الهاتف بنجاح."})
+                return Response({"detail": "تم تحديث رقم الهاتف بنجاح."})
         else:
             return Response(
-                {"detail": "كلمة المرور خاطئة."}, status=status.HTTP_401_UNAUTHORIZED
+                {"detail": "كلمة المرور غير صحيحة."},
+                status=status.HTTP_401_UNAUTHORIZED,
             )
 
     except User.DoesNotExist:
         return Response(
-            {"detail": "البريد الإلكتروني غير مسجل مسبقاً."},
+            {"detail": "البريد الإلكتروني غير مسجّل لدينا."},
             status=status.HTTP_403_FORBIDDEN,
         )
 
@@ -161,18 +165,20 @@ def checkNewEmailExistence(request):
             try:
                 user = User.objects.get(email=new_email)
                 return Response(
-                    {"detail": "البريد الإلكتروني مستخدم مسبقاً."},
+                    {"detail": "هذا البريد الإلكتروني مستخدم بالفعل."},
                     status=status.HTTP_406_NOT_ACCEPTABLE,
                 )
             except User.DoesNotExist:
                 return Response()
         else:
             return Response(
-                {"detail": "كلمة المرور خاطئة."}, status=status.HTTP_401_UNAUTHORIZED
+                {"detail": "كلمة المرور غير صحيحة."},
+                status=status.HTTP_401_UNAUTHORIZED,
             )
     except User.DoesNotExist:
         return Response(
-            {"detail": "البريد الإلكتروني غير موجود."}, status=status.HTTP_403_FORBIDDEN
+            {"detail": "لم يتم العثور على البريد الإلكتروني."},
+            status=status.HTTP_403_FORBIDDEN,
         )
 
 
@@ -199,15 +205,15 @@ def verifyOtpView(request):
             ## here either reset password or verify account
             if request_type == "verify":
                 user_ob.is_verified = True
-                res["detail"] = "تم تفعيل هذا الحساب بنجاح."
+                res["detail"] = "تم تفعيل حسابك بنجاح."
                 user_ob.save()
                 otp_object.delete()
             if request_type == "reset":
-                res["detail"] = "رمز التحقق صحيح."
+                res["detail"] = "تم التحقق من الرمز بنجاح."
 
             if request_type == "change_email":
                 user_ob.email = email
-                res["detail"] = "تم تغيير البريد الإلكتروني بنجاح."
+                res["detail"] = "تم تحديث البريد الإلكتروني بنجاح."
                 user_ob.save()
                 otp_object.delete()
 
@@ -215,12 +221,13 @@ def verifyOtpView(request):
 
         else:
             return Response(
-                {"detail": "رمز التحقق خاطئ."},
+                {"detail": "رمز التحقق غير صحيح."},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
     except Otp.DoesNotExist:
         return Response(
-            {"detail": "أرسل رمز التحقق أولاً."}, status=status.HTTP_401_UNAUTHORIZED
+            {"detail": "يرجى إرسال رمز التحقق أولاً."},
+            status=status.HTTP_401_UNAUTHORIZED,
         )
 
 
@@ -240,12 +247,12 @@ def registerView(request):
         phone_number_error = serializer.errors.get("phone_number")
         if email_error is not None:
             return Response(
-                {"detail": "هذا البريد الإلكتروني مسجّل مسبقاً."},
+                {"detail": "هذا البريد الإلكتروني مسجّل بالفعل."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         elif phone_number_error is not None:
             return Response(
-                {"detail": "رقم الهاتف هذا مسجّل مسبقاً."},
+                {"detail": "رقم الهاتف هذا مسجّل بالفعل."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         else:
@@ -265,7 +272,7 @@ def loginView(request):
     except KeyError:
         return Response(
             {
-                "detail": "يجب إدخال جميع البيانات.",
+                "detail": "يرجى إدخال جميع البيانات المطلوبة.",
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
@@ -274,14 +281,14 @@ def loginView(request):
         isCorrect = user.check_password(password)
         if not isCorrect:
             return Response(
-                {"detail": "البيانات خاطئة."},
+                {"detail": "البريد الإلكتروني أو كلمة المرور غير صحيحة."},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
         if user.is_banned is True:
             return Response(
                 {
-                    "detail": "حسابك محظور.",
+                    "detail": "تم حظر حسابك، يرجى التواصل مع الدعم.",
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
@@ -306,7 +313,7 @@ def loginView(request):
     except User.DoesNotExist:
         return Response(
             {
-                "detail": "البيانات خاطئة.",
+                "detail": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
             },
             status=status.HTTP_401_UNAUTHORIZED,
         )
@@ -349,7 +356,7 @@ def fetchProfileView(request):
 #         return Response(AccountSerializer(User.objects.get(id=request.user.id)).data)
 #     else:
 #         return Response(
-#             {"detail": "كلمة المرور خاطئة."},
+#             {"detail": "كلمة المرور غير صحيحة."},
 #             status=status.HTTP_401_UNAUTHORIZED,
 #         )
 
@@ -370,16 +377,16 @@ def changePasswordOrResetView(request):
         if old_password is not None:
             if old_password == new_password:
                 return Response(
-                    {"detail": "لا يمكن أن إدخال نفس كلمة المرور مرتين."},
+                    {"detail": "لا يمكن استخدام نفس كلمة المرور القديمة."},
                     status=status.HTTP_403_FORBIDDEN,
                 )
             if user.check_password(old_password):
                 user.set_password(new_password)
                 user.save()
-                return Response({"detail": "تم تغيير كلمة المرور بنجاح."})
+                return Response({"detail": "تم تحديث كلمة المرور بنجاح."})
             else:
                 return Response(
-                    {"detail": "كلمة المرور القديمة خاطئة."},
+                    {"detail": "كلمة المرور الحالية غير صحيحة."},
                     status=status.HTTP_401_UNAUTHORIZED,
                 )
 
@@ -391,18 +398,18 @@ def changePasswordOrResetView(request):
                 otp.delete()
                 user.set_password(new_password)
                 user.save()
-                return Response({"detail": "تم إعادة تعيين كلمة المرور بنجاح."})
+                return Response({"detail": "تم إعادة ضبط كلمة المرور بنجاح."})
             except Otp.DoesNotExist:
                 return Response(
                     {
-                        "detail": "رمز التحقق خاطئ.",
+                        "detail": "رمز التحقق غير صحيح.",
                     },
                     status=status.HTTP_401_UNAUTHORIZED,
                 )
 
     except User.DoesNotExist:
         return Response(
-            {"detail": "البريد الإلكتروني غير مسجل مسبقاً"},
+            {"detail": "البريد الإلكتروني غير مسجّل لدينا."},
             status=status.HTTP_403_FORBIDDEN,
         )
 
@@ -443,10 +450,10 @@ def toggleUserBlockView(request, pk):
         if user.is_banned:
             return Response({"detail": "تم حظر المستخدم بنجاح."})
         else:
-            return Response({"detail": "تم فك الحظر عن المستخدم بنجاح."})
+            return Response({"detail": "تم إلغاء حظر المستخدم بنجاح."})
     except User.DoesNotExist:
         return Response(
-            {"detail": "المستخدم غير موجود."}, status=status.HTTP_404_NOT_FOUND
+            {"detail": "لم يتم العثور على المستخدم."}, status=status.HTTP_404_NOT_FOUND
         )
 
 
@@ -468,10 +475,15 @@ def toggleIsFeaturedView(request, pk):
         product.is_featured = not product.is_featured
         product.save()
         if product.is_featured:
-            return Response({"detail": "تم إضافة المنتج إلى القائمة المميزة بنجاح."})
+            return Response(
+                {"detail": "تمت إضافة هذا المنتج إلى القائمة المميزة بنجاح."}
+            )
         else:
-            return Response({"detail": "تم إزالة المنتج عن القائمة المميزة بنجاح."})
+            return Response(
+                {"detail": "تمت إزالة هذا المنتج من القائمة المميزة بنجاح."}
+            )
     except Product.DoesNotExist:
         return Response(
-            {"detail": "هذا المنتج غير موجود."}, status=status.HTTP_404_NOT_FOUND
+            {"detail": "لم يتم العثور على هذا المنتج."},
+            status=status.HTTP_404_NOT_FOUND,
         )
