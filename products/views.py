@@ -76,7 +76,8 @@ def fetchSingleProduct(request, pk):
     same_user = product.seller.email == request.user.email
     if (product.buyer is not None) & (same_user is False):
         return Response(
-            {"detail": "عذراً هذا المنتج غير متوفر."}, status=status.HTTP_404_NOT_FOUND
+            {"detail": "عذراً هذا المنتج غير متوفر."},
+            status=status.HTTP_404_NOT_FOUND,
         )
 
     serializer = ExplicitProductSerializer(product)
@@ -170,7 +171,8 @@ def deleteProduct(request, pk):
         product = Product.objects.get(id=pk)
     except Product.DoesNotExist:
         return Response(
-            {"detail": "هذا المنتج غير متوفر."}, status=status.HTTP_404_NOT_FOUND
+            {"detail": "هذا المنتج غير متوفر."},
+            status=status.HTTP_404_NOT_FOUND,
         )
     if not request.user.is_staff:
         if product.seller.id != request.user.id:
@@ -389,7 +391,8 @@ def approveProduct(request, pk):
 
     except Product.DoesNotExist:
         return Response(
-            {"detail": "هذا المنتج غير موجود."}, status=status.HTTP_404_NOT_FOUND
+            {"detail": "هذا المنتج غير موجود."},
+            status=status.HTTP_404_NOT_FOUND,
         )
 
 
