@@ -68,6 +68,24 @@ def ListAllProducts(request):
     )
 
 
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
+def fetchFavourites(request):
+    lst = request.data["list"]
+    product_manager = Product.objects
+    objects = []
+
+    for id in lst:
+        try:
+            objects.append(product_manager.get(id=id))
+        except Product.DoesNotExist:
+            pass
+
+    ser = ExplicitProductSerializer(objects, many=True)
+    return Response(ser.data)
+
+
 @api_view()
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
@@ -234,8 +252,8 @@ def buyProduct(request, pk):
 
 
 @api_view()
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated, VerificationPermission, BanPermission])
+# @authentication_classes([TokenAuthentication])
+# @permission_classes([IsAuthenticated, VerificationPermission, BanPermission])
 def getSettings(request):
     product_status_objects = ProductStatus.objects.all()
     product_status = ProductStatusSerializer(product_status_objects, many=True).data
