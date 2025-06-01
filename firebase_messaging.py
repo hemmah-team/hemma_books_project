@@ -38,7 +38,7 @@ def sendMessage(
     else:
         m = f"تم طلب منتجك ({product.name})"
         m = f"قام ({product.buyer.name}) بـ (شراء/استعارة/الحصول على) منتجك ({product.name}). يرجى التواصل معه لتنسيق التسليم."
-    for fcm in seller_user.fcms.all():
+    for fcm in buyer_user.fcms.all():
         if fcm:
             message = messaging.Message(
                 notification=messaging.Notification(
@@ -47,7 +47,6 @@ def sendMessage(
                 ),
                 token=fcm.token,
             )
-
             messaging.send(message)
         Notification.objects.create(title="طلب", message=m, user=seller_user)
 
