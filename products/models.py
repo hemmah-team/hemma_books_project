@@ -76,7 +76,7 @@ class Product(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return str(self.id)
+        return str(self.id) + " - " + self.name
 
 
 class AppVersion(models.Model):

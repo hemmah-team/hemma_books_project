@@ -264,10 +264,11 @@ def buyProduct(request, pk):
     product.buyer = request.user
     product.save()
 
-    ## TODO: SEND FCM NOTIFICATION
-    sendMessage(buyer_user=request.user, seller_user=product.seller, product=product)
+    ##!!!!! TODO: SEND FCM NOTIFICATION
+    # sendMessage(buyer_user=request.user, seller_user=product.seller, product=product)
+    ser = ProfileProductSerializer(product)
 
-    return Response({"detail": "تم شراء المنتج بنجاح."})
+    return Response(ser.data)
 
 
 @api_view()

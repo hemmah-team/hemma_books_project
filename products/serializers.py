@@ -145,7 +145,6 @@ class UpdateProfileProductSerializer(serializers.ModelSerializer):
     address = AddressSerializer()
     process_info = ProcessInfoSerializer()
     university_info = UniversityInfoSerializer(allow_null=True)
-    category = CategorySerializer(many=True, read_only=True)
     product_status = ProductStatusSerializer(read_only=True)
     seller = AccountSerializer()
     buyer = AccountSerializer()
@@ -174,6 +173,8 @@ class UpdateProfileProductSerializer(serializers.ModelSerializer):
         ]
 
     def update(self, instance, validated_data):
+        print("heree")
+
         process_info_data = validated_data.pop("process_info", None)
         university_info_data = validated_data.pop("university_info", "None")
         address_data = validated_data.pop("address", None)
@@ -186,9 +187,11 @@ class UpdateProfileProductSerializer(serializers.ModelSerializer):
         instance.product_status = validated_data.get(
             "product_status", instance.product_status
         )
-
-        if category:
+        print("categories is " + str(category))
+        if category is not None:
+            # instance.category.clear()
             instance.category.set(category)
+            # instance.category.set(category)
         if process_info_data:
             ProcessInfo.objects.filter(product=instance.id).update(**process_info_data)
 
