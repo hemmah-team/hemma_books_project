@@ -90,16 +90,35 @@ def fetchFavourites(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
 def fetchSingleProduct(request, pk):
-    product = Product.objects.get(id=pk)
-    same_user = product.seller.email == request.user.email
-    if (product.buyer is not None) & (same_user is False):
+    try:
+        product = Product.objects.get(id=pk)
+        same_user = product.seller.email == request.user.email
+        if same_user is False:
+            if product.buyer is not None:
+                if product.buyer.email == request.user.email:
+                    same_user = True
+
+        if (product.buyer is not None) & (same_user is False):
+            return Response(
+                {"detail": "عذراً هذا المنتج غير متوفر."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        if (product.is_pending is True) & (same_user is False):
+            return Response(
+                {"detail": "عذراً هذا المنتج غير متوفر."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if same_user is False:
+            serializer = ExplicitProductSerializer(product)
+        else:
+            serializer = ProfileProductSerializer(product)
+        return Response(serializer.data)
+    except Product.DoesNotExist:
         return Response(
             {"detail": "عذراً هذا المنتج غير متوفر."},
             status=status.HTTP_404_NOT_FOUND,
         )
-
-    serializer = ExplicitProductSerializer(product)
-    return Response(serializer.data)
 
 
 @api_view(["POST"])
