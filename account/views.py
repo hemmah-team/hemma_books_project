@@ -325,7 +325,11 @@ def loginView(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
 def fetchMyProducts(request):
-    products = Product.objects.filter(Q(seller=request.user) | Q(buyer=request.user))
+    products = Product.objects.filter(
+        Q(seller=request.user) | Q(buyer=request.user)
+    ).order_by(
+        "-created_at",
+    )
     serializer = ProfileProductSerializer(
         products,
         many=True,
