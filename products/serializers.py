@@ -13,6 +13,8 @@ from .models import (
     UniversityInfo,
 )
 
+### !!!!!!!!!!! START OF FIXED SERIALIZERS
+
 
 class UniversityInfoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -59,6 +61,64 @@ class ProcessInfoSerializer(serializers.ModelSerializer):
         exclude = ["id", "product"]
 
 
+### !!!!!!!!!!! END OF FIXED SERIALIZERS
+
+
+### ?? USED FOR HOME, FAVOURITE, FILTER
+class BasicProductSerializer(serializers.ModelSerializer):
+    address = AddressSerializer()
+    process_info = ProcessInfoSerializer()
+
+    class Meta:
+        model = Product
+        fields = [
+            "id",
+            "name",
+            "image",
+            "category",
+            "address",
+            "process_info",
+            "is_featured",
+        ]
+
+
+### ?? USED FOR EDIT, CREATE, MY LIBRARY
+class MiddleProductSerializer:
+    address = AddressSerializer()
+    process_info = ProcessInfoSerializer()
+    seller = AccountSerializer()
+    buyer = AccountSerializer()
+
+    class Meta:
+        model = Product
+        fields = [
+            "id",
+            "name",
+            "image",
+            "category",
+            "address",
+            "process_info",
+            "is_featured",
+            "seller",
+            "buyer",
+        ]
+
+
+### ?? USED FOR BUY (RETURN DATA), PRODUCT SCREEN
+class WholeProductSerializer(serializers.ModelSerializer):
+    address = ExplicitAddressSerializer()
+    process_info = ProcessInfoSerializer()
+    university_info = UniversityInfoSerializer()
+    category = CategorySerializer(many=True)
+    product_status = ProductStatusSerializer()
+    seller = AccountSerializer()
+    buyer = AccountSerializer()
+
+    class Meta:
+        model = Product
+        fields = "__all__"
+
+
 class ProductSerializer(serializers.ModelSerializer):
     address = AddressSerializer()
     process_info = ProcessInfoSerializer()
@@ -82,36 +142,6 @@ class ProductSerializer(serializers.ModelSerializer):
             "is_featured",
             "pages",
         ]
-
-    # def update(self, instance, validated_data):
-    #     process_info_data = validated_data.pop("process_info", None)
-    #     university_info_data = validated_data.pop("university_info", None)
-    #     address_data = validated_data.pop("address", None)
-    #     category = validated_data.pop("category", None)
-
-    #     instance.pages = validated_data.get("pages", instance.pages)
-    #     instance.name = validated_data.get("name", instance.name)
-    #     instance.description = validated_data.get("description", instance.description)
-    #     instance.image = validated_data.get("image", instance.image)
-    #     instance.product_status = validated_data.get(
-    #         "product_status", instance.product_status
-    #     )
-
-    #     if category:
-    #         instance.category.set(category)
-    #     if process_info_data:
-    #         ProcessInfo.objects.filter(product=instance.id).update(**process_info_data)
-
-    #     if university_info_data:
-    #         UniversityInfo.objects.filter(product=instance.id).update(
-    #             **university_info_data
-    #         )
-
-    #     if address_data:
-    #         Address.objects.filter(product=instance.id).update(**address_data)
-
-    #     instance.save()
-    #     return instance
 
 
 class ExplicitProductSerializer(serializers.ModelSerializer):
@@ -189,9 +219,8 @@ class UpdateProfileProductSerializer(serializers.ModelSerializer):
         )
         print("categories is " + str(category))
         if category is not None:
-            # instance.category.clear()
             instance.category.set(category)
-            # instance.category.set(category)
+
         if process_info_data:
             ProcessInfo.objects.filter(product=instance.id).update(**process_info_data)
 
