@@ -17,7 +17,7 @@ from rest_framework.response import Response
 from firebase_messaging import sendPublicMessage
 from permissions import BanPermission, VerificationPermission
 from products.models import Product
-from products.serializers import ProfileProductSerializer
+from products.serializers import WholeProductSerializer
 
 from .models import Fcm, Notification, Otp, User
 from .serializers import (
@@ -330,7 +330,7 @@ def fetchMyProducts(request):
     ).order_by(
         "-created_at",
     )
-    serializer = ProfileProductSerializer(
+    serializer = WholeProductSerializer(
         products,
         many=True,
     )

@@ -66,8 +66,9 @@ class ProcessInfoSerializer(serializers.ModelSerializer):
 
 ### ?? USED FOR HOME, FAVOURITE, FILTER
 class BasicProductSerializer(serializers.ModelSerializer):
-    address = AddressSerializer()
+    address = ExplicitAddressSerializer()
     process_info = ProcessInfoSerializer()
+    category = CategorySerializer(many=True)
 
     class Meta:
         model = Product
@@ -83,9 +84,10 @@ class BasicProductSerializer(serializers.ModelSerializer):
 
 
 ### ?? USED FOR EDIT, CREATE, MY LIBRARY
-class MiddleProductSerializer:
-    address = AddressSerializer()
+class MiddleProductSerializer(serializers.ModelSerializer):
+    address = ExplicitAddressSerializer()
     process_info = ProcessInfoSerializer()
+    category = CategorySerializer(many=True)
     seller = AccountSerializer()
     buyer = AccountSerializer()
 
@@ -101,7 +103,21 @@ class MiddleProductSerializer:
             "is_featured",
             "seller",
             "buyer",
+            "is_pending",
         ]
+
+
+### ?? USED FOR PRODUCT SCREEN
+class SemiWholeProductSerializer(serializers.ModelSerializer):
+    address = ExplicitAddressSerializer()
+    process_info = ProcessInfoSerializer()
+    university_info = UniversityInfoSerializer()
+    category = CategorySerializer(many=True)
+    product_status = ProductStatusSerializer()
+
+    class Meta:
+        model = Product
+        exclude = ["seller", "buyer"]
 
 
 ### ?? USED FOR BUY (RETURN DATA), PRODUCT SCREEN
@@ -117,58 +133,6 @@ class WholeProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = "__all__"
-
-
-class ProductSerializer(serializers.ModelSerializer):
-    address = AddressSerializer()
-    process_info = ProcessInfoSerializer()
-    university_info = UniversityInfoSerializer()
-
-    class Meta:
-        model = Product
-        fields = [
-            "id",
-            "name",
-            "description",
-            "image",
-            "product_status",
-            "category",
-            "created_at",
-            "updated_at",
-            "product_status",
-            "address",
-            "process_info",
-            "university_info",
-            "is_featured",
-            "pages",
-        ]
-
-
-class ExplicitProductSerializer(serializers.ModelSerializer):
-    address = ExplicitAddressSerializer()
-    process_info = ProcessInfoSerializer()
-    university_info = UniversityInfoSerializer()
-    category = CategorySerializer(many=True)
-    product_status = ProductStatusSerializer()
-
-    class Meta:
-        model = Product
-        fields = [
-            "product_status",
-            "address",
-            "id",
-            "name",
-            "description",
-            "image",
-            "category",
-            "created_at",
-            "updated_at",
-            "product_status",
-            "process_info",
-            "university_info",
-            "is_featured",
-            "pages",
-        ]
 
 
 class UpdateProfileProductSerializer(serializers.ModelSerializer):
@@ -203,8 +167,6 @@ class UpdateProfileProductSerializer(serializers.ModelSerializer):
         ]
 
     def update(self, instance, validated_data):
-        print("heree")
-
         process_info_data = validated_data.pop("process_info", None)
         university_info_data = validated_data.pop("university_info", "None")
         address_data = validated_data.pop("address", None)
@@ -248,38 +210,6 @@ class UpdateProfileProductSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
-
-
-class ProfileProductSerializer(serializers.ModelSerializer):
-    address = ExplicitAddressSerializer()
-    process_info = ProcessInfoSerializer()
-    university_info = UniversityInfoSerializer()
-    category = CategorySerializer(many=True, read_only=True)
-    product_status = ProductStatusSerializer(read_only=True)
-    seller = AccountSerializer()
-    buyer = AccountSerializer()
-
-    class Meta:
-        model = Product
-        fields = [
-            "product_status",
-            "address",
-            "id",
-            "name",
-            "description",
-            "image",
-            "category",
-            "created_at",
-            "updated_at",
-            "product_status",
-            "process_info",
-            "university_info",
-            "is_featured",
-            "pages",
-            "seller",
-            "buyer",
-            "is_pending",
-        ]
 
 
 class NewProductSerializer(serializers.ModelSerializer):

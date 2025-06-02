@@ -17,13 +17,14 @@ from permissions import BanPermission, VerificationPermission
 
 from .models import Category, City, Product, ProductStatus
 from .serializers import (
+    BasicProductSerializer,
     CategorySerializer,
     CitySerializer,
-    ExplicitProductSerializer,
     NewProductSerializer,
     ProductStatusSerializer,
-    ProfileProductSerializer,
+    SemiWholeProductSerializer,
     UpdateProfileProductSerializer,
+    WholeProductSerializer,
 )
 
 # FIELDS1 = ["name", "description", "product_status"]
@@ -58,10 +59,10 @@ def ListAllProducts(request):
     ).order_by(
         "-created_at",
     )[:10]
-    ser1 = ExplicitProductSerializer(querysetFeatured, many=True)
-    ser2 = ExplicitProductSerializer(querysetFree, many=True)
-    ser3 = ExplicitProductSerializer(querysetPaid, many=True)
-    ser4 = ExplicitProductSerializer(querysetLend, many=True)
+    ser1 = BasicProductSerializer(querysetFeatured, many=True)
+    ser2 = BasicProductSerializer(querysetFree, many=True)
+    ser3 = BasicProductSerializer(querysetPaid, many=True)
+    ser4 = BasicProductSerializer(querysetLend, many=True)
 
     return Response(
         {"featured": ser1.data, "free": ser2.data, "paid": ser3.data, "lend": ser4.data}
@@ -82,7 +83,7 @@ def fetchFavourites(request):
         except Product.DoesNotExist:
             pass
 
-    ser = ExplicitProductSerializer(objects, many=True)
+    ser = BasicProductSerializer(objects, many=True)
     return Response(ser.data)
 
 
@@ -110,9 +111,10 @@ def fetchSingleProduct(request, pk):
             )
 
         if same_user is False:
-            serializer = ExplicitProductSerializer(product)
+            ## TODO: DO HERE MAKE SERIALIZER ALL EXCEPT USER, SELLER
+            serializer = SemiWholeProductSerializer(product)
         else:
-            serializer = ProfileProductSerializer(product)
+            serializer = WholeProductSerializer(product)
         return Response(serializer.data)
     except Product.DoesNotExist:
         return Response(
@@ -144,7 +146,7 @@ def createNewProduct(request):
 
     if serializer.is_valid():
         obj = serializer.save()
-        ser = ProfileProductSerializer(obj)
+        ser = WholeProductSerializer(obj)
 
         return Response(ser.data)
     else:
@@ -187,7 +189,7 @@ def editProduct(request, pk):
         if serializer.is_valid():
             obj = serializer.save()
 
-            ser = ProfileProductSerializer(obj)
+            ser = WholeProductSerializer(obj)
             return Response(ser.data)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -264,16 +266,14 @@ def buyProduct(request, pk):
     product.buyer = request.user
     product.save()
 
-    ##!!!!! TODO: SEND FCM NOTIFICATION
-    sendMessage(buyer_user=request.user, seller_user=product.seller, product=product)
-    ser = ProfileProductSerializer(product)
+    ## TODO: SEND FCM NOTIFICATION
+    # sendMessage(buyer_user=request.user, seller_user=product.seller, product=product)
+    ser = WholeProductSerializer(product)
 
     return Response(ser.data)
 
 
 @api_view()
-# @authentication_classes([TokenAuthentication])
-# @permission_classes([IsAuthenticated, VerificationPermission, BanPermission])
 def getSettings(request):
     product_status_objects = ProductStatus.objects.all()
     product_status = ProductStatusSerializer(product_status_objects, many=True).data
@@ -395,7 +395,7 @@ def filterView(request):
         request,
     )
     res = paginator.get_paginated_response(
-        ExplicitProductSerializer(results, many=True).data,
+        BasicProductSerializer(results, many=True).data,
     )
     return res
 
@@ -457,7 +457,7 @@ class ListStaffProducts(ListAPIView):
     queryset = Product.objects.filter(
         is_pending=False,
     ).order_by("-created_at")
-    serializer_class = ProfileProductSerializer
+    serializer_class = WholeProductSerializer
     pagination_class = PageNumberPagination
 
 
@@ -474,4 +474,4 @@ class ListStaffPendingProducts(ListAPIView):
     ).order_by("-created_at")
     pagination_class = PageNumberPagination
 
-    serializer_class = ProfileProductSerializer
+    serializer_class = WholeProductSerializer
