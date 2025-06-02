@@ -48,17 +48,19 @@ def sendMessage(
                 token=fcm.token,
             )
             messaging.send(message)
-        Notification.objects.create(title="طلب", message=m, user=seller_user)
+        Notification.objects.create(
+            title="طلب", message=m, user=seller_user, product=product.id
+        )
 
 
 def sendPublicMessage(message: str, title: str):
     messag = messaging.Message(
         notification=messaging.Notification(
-            title=title,
+            title="title",
             body=message,
         ),
         topic="public",
     )
 
     messaging.send(messag)
-    Notification.objects.create(title="طلب", message=message)
+    Notification.objects.create(title=title, message=message)

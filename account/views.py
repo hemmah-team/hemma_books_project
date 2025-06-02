@@ -449,7 +449,7 @@ def toggleUserBlockView(request, pk):
 @permission_classes([IsAuthenticated, IsAdminUser])
 def sendPublicNotificationView(request):
     ## TODO: SEND TOPIC NOTIFICATION
-    sendPublicMessage(message="test", title="titletest")
+    sendPublicMessage(message="إعلان", title="هذا الإعلان تجريبي لأغراض تعليمية.")
     return Response()
 
 

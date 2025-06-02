@@ -271,7 +271,7 @@ def buyProduct(request, pk):
     product.save()
 
     ## TODO: SEND FCM NOTIFICATION
-    # sendMessage(buyer_user=request.user, seller_user=product.seller, product=product)
+    sendMessage(buyer_user=request.user, seller_user=product.seller, product=product)
     ser = WholeProductSerializer(product)
 
     return Response(ser.data)

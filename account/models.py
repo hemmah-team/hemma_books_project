@@ -103,6 +103,7 @@ class Otp(models.Model):
 class Notification(models.Model):
     title = models.CharField(max_length=30)
     message = models.CharField(max_length=150)
+    product = models.IntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(
         User,
