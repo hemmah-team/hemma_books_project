@@ -1,3 +1,5 @@
+import datetime
+
 from django.db.models import Q
 from django.http import QueryDict
 from rest_framework import status
@@ -20,9 +22,9 @@ from .serializers import (
     BasicProductSerializer,
     CategorySerializer,
     CitySerializer,
+    MiddleProductSerializer,
     NewProductSerializer,
     ProductStatusSerializer,
-    SemiWholeProductSerializer,
     UpdateProfileProductSerializer,
     WholeProductSerializer,
 )
@@ -112,7 +114,7 @@ def fetchSingleProduct(request, pk):
 
         if same_user is False:
             ## TODO: DO HERE MAKE SERIALIZER ALL EXCEPT USER, SELLER
-            serializer = SemiWholeProductSerializer(product)
+            serializer = MiddleProductSerializer(product)
         else:
             serializer = WholeProductSerializer(product)
         return Response(serializer.data)
@@ -264,6 +266,8 @@ def buyProduct(request, pk):
         )
 
     product.buyer = request.user
+    product.got_at = datetime.datetime.now()
+
     product.save()
 
     ## TODO: SEND FCM NOTIFICATION

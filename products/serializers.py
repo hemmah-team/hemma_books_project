@@ -83,32 +83,8 @@ class BasicProductSerializer(serializers.ModelSerializer):
         ]
 
 
-### ?? USED FOR EDIT, CREATE, MY LIBRARY
-class MiddleProductSerializer(serializers.ModelSerializer):
-    address = ExplicitAddressSerializer()
-    process_info = ProcessInfoSerializer()
-    category = CategorySerializer(many=True)
-    seller = AccountSerializer()
-    buyer = AccountSerializer()
-
-    class Meta:
-        model = Product
-        fields = [
-            "id",
-            "name",
-            "image",
-            "category",
-            "address",
-            "process_info",
-            "is_featured",
-            "seller",
-            "buyer",
-            "is_pending",
-        ]
-
-
 ### ?? USED FOR PRODUCT SCREEN
-class SemiWholeProductSerializer(serializers.ModelSerializer):
+class MiddleProductSerializer(serializers.ModelSerializer):
     address = ExplicitAddressSerializer()
     process_info = ProcessInfoSerializer()
     university_info = UniversityInfoSerializer()
@@ -117,7 +93,7 @@ class SemiWholeProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        exclude = ["seller", "buyer"]
+        exclude = ["seller", "buyer", "got_at"]
 
 
 ### ?? USED FOR BUY (RETURN DATA), PRODUCT SCREEN
