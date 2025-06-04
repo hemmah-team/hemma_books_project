@@ -11,6 +11,7 @@ from .views import (
     fetchProfileView,
     listAllUsersView,
     loginView,
+    logoutUser,
     registerView,
     sendOtpView,
     sendPublicNotificationView,
@@ -22,6 +23,7 @@ from .views import (
 urlpatterns = [
     path("register/", registerView),
     path("login/", loginView),
+    path("logout/", logoutUser),
     path("check_email/", checkEmailExistence),
     path("check_new_email/", checkNewEmailExistence),
     path("change_name/", changeNameView),

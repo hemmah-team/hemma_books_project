@@ -13,11 +13,11 @@ from .views import (
     fetchFavourites,
     fetchSingleProduct,
     filterView,
-    getSettings,
+    getInitital,
 )
 
 urlpatterns = [
-    path("list_settings/", getSettings),
+    path("get_initial/", getInitital),
     path("<int:pk>/", fetchSingleProduct),
     path("list/", ListAllProducts),
     path("list_favourites/", fetchFavourites),

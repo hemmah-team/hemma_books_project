@@ -349,6 +349,20 @@ def fetchProfileView(request):
 
 
 @api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, VerificationPermission])
+def logoutUser(request):
+    user = request.user
+    try:
+        fcm = request.data["fcm"]
+        ob = Fcm.objects.get(token=fcm, user=user)
+        ob.delete()
+        return Response({"detail": "تم تسجيل الخروج بنجاح."})
+    except:
+        return Response({"detail": "حدث خطأ ما."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
 def changePasswordOrResetView(request):
     ## ! only for change password
     old_password = request.data.get("old_password", None)
@@ -407,7 +421,7 @@ def changePasswordOrResetView(request):
 def fetchNotificationsView(request):
     user = request.user
     notifications = Notification.objects.filter(Q(user=None) | Q(user=user)).order_by(
-        "-id"
+        "-created_at"
     )
     serializer = NotificationSerializer(notifications, many=True)
     return Response(serializer.data)

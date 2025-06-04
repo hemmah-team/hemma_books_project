@@ -4,6 +4,7 @@ from django.db.models import Q
 from django.http import QueryDict
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
+from rest_framework.authtoken.models import Token
 from rest_framework.decorators import (
     api_view,
     authentication_classes,
@@ -277,8 +278,31 @@ def buyProduct(request, pk):
     return Response(ser.data)
 
 
-@api_view()
-def getSettings(request):
+@api_view(["POST"])
+def getInitital(request):
+    token = request.data.get("token", None)
+    if token:
+        token_obj = Token.objects.get(key=request.data["token"])
+
+        user = token_obj.user
+        if user.is_banned:
+            ## user is banned
+            return Response(
+                {
+                    "detail": "تم حظر حسابك، يرجى التواصل مع الدعم.",
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        else:
+            return serializeInitialData()
+            ## user is not banned
+
+    else:
+        ## user is anonymous
+        return serializeInitialData()
+
+
+def serializeInitialData() -> Response:
     product_status_objects = ProductStatus.objects.all()
     product_status = ProductStatusSerializer(product_status_objects, many=True).data
     city_objects = City.objects.all()
