@@ -82,7 +82,7 @@ class Product(models.Model):
 
 class AppVersion(models.Model):
     version = models.CharField(max_length=40)
-    link = models.CharField(max_length=250)
+    link = models.CharField(max_length=250, blank=True, null=True)
 
 
 class ProcessInfo(models.Model):
