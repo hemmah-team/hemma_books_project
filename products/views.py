@@ -18,7 +18,7 @@ from rest_framework.response import Response
 from firebase_messaging import sendMessage
 from permissions import BanPermission, VerificationPermission
 
-from .models import Category, City, Product, ProductStatus
+from .models import AppVersion, Category, City, Product, ProductStatus
 from .serializers import (
     BasicProductSerializer,
     CategorySerializer,
@@ -281,7 +281,14 @@ def buyProduct(request, pk):
 @api_view(["POST"])
 def getInitital(request):
     token = request.data.get("token", None)
-    if token:
+    used_version = request.data.get("version", None)
+    if (token is not None) & (used_version is not None):
+        latest_version = AppVersion.objects.order_by("-id").last()
+        if used_version != latest_version.version:
+            return Response(
+                {"detail": "نسخة التطبيق قديمة، ثبت أحدث إصدار."},
+                status=status.HTTP_406_NOT_ACCEPTABLE,
+            )
         token_obj = Token.objects.get(key=request.data["token"])
 
         user = token_obj.user

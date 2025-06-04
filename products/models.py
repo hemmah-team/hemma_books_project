@@ -84,6 +84,9 @@ class AppVersion(models.Model):
     version = models.CharField(max_length=40)
     link = models.CharField(max_length=250, blank=True, null=True)
 
+    def __str__(self):
+        return self.version
+
 
 class ProcessInfo(models.Model):
     method = models.CharField(max_length=15)
