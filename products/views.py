@@ -286,7 +286,10 @@ def getInitital(request):
         latest_version = AppVersion.objects.order_by("-id").last()
         if used_version != latest_version.version:
             return Response(
-                {"detail": "نسخة التطبيق قديمة، ثبت أحدث إصدار."},
+                {
+                    "detail": "نسخة التطبيق قديمة، ثبت أحدث إصدار.",
+                    "link": latest_version.link,
+                },
                 status=status.HTTP_406_NOT_ACCEPTABLE,
             )
         token_obj = Token.objects.get(key=request.data["token"])
