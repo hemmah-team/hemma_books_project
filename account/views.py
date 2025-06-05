@@ -353,13 +353,22 @@ def fetchProfileView(request):
 @permission_classes([IsAuthenticated, VerificationPermission])
 def logoutUser(request):
     user = request.user
-    try:
-        fcm = request.data["fcm"]
-        ob = Fcm.objects.get(token=fcm, user=user)
-        ob.delete()
-        return Response({"detail": "تم تسجيل الخروج بنجاح."})
-    except:
-        return Response({"detail": "حدث خطأ ما."}, status=status.HTTP_400_BAD_REQUEST)
+    fcm = request.data.get("fcm")
+    if fcm is None:
+        return Response(
+            {
+                "detail": "حدث خطأ ما.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    else:
+        try:
+            ob = Fcm.objects.get(token=fcm, user=user)
+            ob.delete()
+        except:
+            pass
+        finally:
+            return Response({"detail": "تم تسجيل الخروج بنجاح."})
 
 
 @api_view(["POST"])
