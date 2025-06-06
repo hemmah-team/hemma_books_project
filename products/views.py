@@ -1,6 +1,4 @@
-import base64
 import datetime
-import uuid
 
 from django.db.models import Q
 from django.http import QueryDict
@@ -147,13 +145,6 @@ def createNewProduct(request):
         except KeyError:
             pass
 
-    base64_image = tmp["image"]
-    name = uuid.uuid4()
-    path = f"staticfiles/{name}.png"
-    with open(path, "wb") as fh:
-        fh.write(base64.b64decode(base64_image))
-
-    tmp["image"] = f"media/{name}.png"
     serializer = NewProductSerializer(data=tmp)
 
     if serializer.is_valid():
