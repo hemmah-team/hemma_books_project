@@ -192,7 +192,8 @@ class NewProductSerializer(serializers.ModelSerializer):
     university_info = UniversityInfoSerializer(required=False, allow_null=True)
     process_info = ProcessInfoSerializer(required=True)
     address = AddressSerializer(required=True)
-    image = Base64ImageField(required=True)
+    ## !!! REPLACE THIS WITH CHARDFIELD
+    # image = Base64ImageField(required=True)
 
     class Meta:
         model = Product
