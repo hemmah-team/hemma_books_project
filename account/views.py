@@ -24,6 +24,7 @@ from .serializers import (
     AccountSerializer,
     AccountStaffSerializer,
     NotificationSerializer,
+    NotificationSettingSerializer,
     RegisterSerizalizer,
 )
 
@@ -205,9 +206,8 @@ def verifyOtpView(request):
     request_type = request.data["type"]
     code = request.data["code"]
     email = request.data["email"]
-    # if request.auth is not None & request_type == "change_number":
-    #     print("dsjsdosdksjdsdjsd")
-    #     pass
+    fcm = request.data.get("fcm", None)
+
     try:
         user = User.objects.get(email=email)
     except User.DoesNotExist:
@@ -222,11 +222,22 @@ def verifyOtpView(request):
             ## here either reset password or verify account
             if request_type == "verify":
                 user_ob.is_verified = True
+
                 res["detail"] = "تم تفعيل حسابك بنجاح."
                 user_ob.save()
+
                 NotificationSetting.objects.create(user=user)
 
                 otp_object.delete()
+
+                if fcm is not None:
+                    ## here make fcm token
+                    try:
+                        Fcm.objects.filter(token=fcm).delete()
+                    except Fcm.DoesNotExist:
+                        pass
+                    finally:
+                        Fcm.objects.create(user=user, token=fcm)
             if request_type == "reset":
                 res["detail"] = "تم التحقق من الرمز بنجاح."
 
@@ -314,19 +325,25 @@ def loginView(request):
 
         token = Token.objects.get(user=user)
         ## change fcm
+        ### !!!! COMMENT THIS WILL HANDLE TO VERIFICATION PART
         try:
             Fcm.objects.filter(token=fcm).delete()
         except Fcm.DoesNotExist:
             pass
         finally:
             Fcm.objects.create(user=user, token=fcm)
-
+        try:
+            notification_settings = NotificationSetting.objects.get(user=user)
+            notification = NotificationSettingSerializer(notification_settings).data
+        except NotificationSetting.DoesNotExist:
+            pass
         return Response(
             {
                 "name": user.name,
                 "token": str(token),
                 "is_verified": user.is_verified,
                 "phone_number": user.phone_number,
+                "notification_settings": notification,
             }
         )
     except User.DoesNotExist:

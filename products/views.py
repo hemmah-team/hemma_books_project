@@ -311,13 +311,16 @@ def getInitital(request):
 
     else:
         ## user is anonymous
-        return serializeInitialData(user)
+        return serializeInitialData(None)
 
 
 def serializeInitialData(user) -> Response:
     try:
-        notification_settings = NotificationSetting.objects.get(user=user)
-        notifications = NotificationSettingSerializer(notification_settings).data
+        if user is not None:
+            notification_settings = NotificationSetting.objects.get(user=user)
+            notifications = NotificationSettingSerializer(notification_settings).data
+        else:
+            notification_settings = None
     except NotificationSetting.DoesNotExist:
         pass
     product_status_objects = ProductStatus.objects.all()
