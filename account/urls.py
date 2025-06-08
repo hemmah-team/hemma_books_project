@@ -2,6 +2,7 @@ from django.urls import path
 
 from .views import (
     changeNameView,
+    changeNotificationSettings,
     changeNumberView,
     changePasswordOrResetView,
     checkEmailExistence,
@@ -27,6 +28,7 @@ urlpatterns = [
     path("check_email/", checkEmailExistence),
     path("check_new_email/", checkNewEmailExistence),
     path("change_name/", changeNameView),
+    path("change_notification_settings/", changeNotificationSettings),
     path("send_otp/", sendOtpView),
     path("verify_otp/", verifyOtpView),
     path("change_number/", changeNumberView),

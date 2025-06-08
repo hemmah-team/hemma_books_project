@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Fcm, Notification, User
+from .models import Fcm, Notification, NotificationSetting, User
 
 
 class RegisterSerizalizer(serializers.ModelSerializer):
@@ -16,6 +16,7 @@ class RegisterSerizalizer(serializers.ModelSerializer):
         user = User(**validated_data)
         user.set_password(validated_data["password"])
         user.save()
+
         try:
             Fcm.objects.filter(token=fcm).delete()
         except Fcm.DoesNotExist:
@@ -41,3 +42,9 @@ class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
         exclude = ["user"]
+
+
+class NotificationSettingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NotificationSetting
+        exclude = ["user", "id"]

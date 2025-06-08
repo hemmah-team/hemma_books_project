@@ -15,6 +15,8 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
+from account.models import NotificationSetting
+from account.serializers import NotificationSettingSerializer
 from firebase_messaging import sendMessage
 from permissions import BanPermission, VerificationPermission
 
@@ -304,24 +306,43 @@ def getInitital(request):
                 status=status.HTTP_403_FORBIDDEN,
             )
         else:
-            return serializeInitialData()
+            return serializeInitialData(user)
             ## user is not banned
 
     else:
         ## user is anonymous
-        return serializeInitialData()
+        return serializeInitialData(user)
 
 
-def serializeInitialData() -> Response:
+def serializeInitialData(user) -> Response:
+    try:
+        notification_settings = NotificationSetting.objects.get(user=user)
+        notifications = NotificationSettingSerializer(notification_settings).data
+    except NotificationSetting.DoesNotExist:
+        pass
     product_status_objects = ProductStatus.objects.all()
     product_status = ProductStatusSerializer(product_status_objects, many=True).data
     city_objects = City.objects.all()
     city = CitySerializer(city_objects, many=True).data
     category_objects = Category.objects.all()
     category = CategorySerializer(category_objects, many=True).data
-    return Response(
-        {"categories": category, "cities": city, "product_status": product_status}
-    )
+    if notification_settings is None:
+        return Response(
+            {
+                "categories": category,
+                "cities": city,
+                "product_status": product_status,
+            }
+        )
+    else:
+        return Response(
+            {
+                "categories": category,
+                "cities": city,
+                "product_status": product_status,
+                "notification_settings": notifications,
+            }
+        )
 
 
 @api_view(["POST"])

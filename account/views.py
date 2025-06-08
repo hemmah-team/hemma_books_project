@@ -19,7 +19,7 @@ from permissions import BanPermission, VerificationPermission
 from products.models import Product
 from products.serializers import WholeProductSerializer
 
-from .models import Fcm, Notification, Otp, User
+from .models import Fcm, Notification, NotificationSetting, Otp, User
 from .serializers import (
     AccountSerializer,
     AccountStaffSerializer,
@@ -186,6 +186,21 @@ def checkNewEmailExistence(request):
 
 @api_view(["POST"])
 @authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
+def changeNotificationSettings(request):
+    private = request.data["private"]
+    public = request.data["public"]
+
+    user = request.user
+    NotificationSetting.objects.filter(user=user).update(private=private, public=public)
+
+    return Response(
+        {"detail": "تم تحديث إعدادات الإشعارات بنجاح."},
+    )
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
 def verifyOtpView(request):
     request_type = request.data["type"]
     code = request.data["code"]
@@ -209,6 +224,8 @@ def verifyOtpView(request):
                 user_ob.is_verified = True
                 res["detail"] = "تم تفعيل حسابك بنجاح."
                 user_ob.save()
+                NotificationSetting.objects.create(user=user)
+
                 otp_object.delete()
             if request_type == "reset":
                 res["detail"] = "تم التحقق من الرمز بنجاح."
