@@ -22,7 +22,6 @@ class RegisterSerizalizer(serializers.ModelSerializer):
             pass
         finally:
             Fcm.objects.create(user=user, token=fcm)
-        Fcm.objects.create(user=user, token=fcm)
         return user
 
 

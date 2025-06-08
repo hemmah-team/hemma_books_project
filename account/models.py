@@ -70,7 +70,6 @@ class User(AbstractUser):
     name = models.CharField(max_length=50)
     password = models.CharField(max_length=200)
     phone_number = models.CharField(max_length=10, unique=True)
-    # fcm = models.CharField(max_length=200)
     is_verified = models.BooleanField(default=False)
     is_banned = models.BooleanField(default=False)
     username = None

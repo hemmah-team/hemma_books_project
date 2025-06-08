@@ -363,7 +363,7 @@ def logoutUser(request):
         )
     else:
         try:
-            ob = Fcm.objects.get(token=fcm, user=user)
+            ob = Fcm.objects.filter(token=fcm, user=user)
             ob.delete()
         except:
             pass
