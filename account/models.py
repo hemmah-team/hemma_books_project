@@ -125,7 +125,9 @@ class Fcm(models.Model):
 
 
 class NotificationSetting(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="notification_settings"
+    )
     public = models.BooleanField(default=True)
     private = models.BooleanField(default=True)
 

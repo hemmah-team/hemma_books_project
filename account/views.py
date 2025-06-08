@@ -446,8 +446,10 @@ def changePasswordOrResetView(request):
 @permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
 def fetchNotificationsView(request):
     user = request.user
-    notifications = Notification.objects.filter(Q(user=None) | Q(user=user)).order_by(
-        "-created_at"
+    notifications = (
+        Notification.objects.filter(Q(user=None) | Q(user=user))
+        .filter(created_at__gte=user.date_joined)
+        .order_by("-created_at")
     )
     serializer = NotificationSerializer(notifications, many=True)
     return Response(serializer.data)

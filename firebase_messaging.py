@@ -38,30 +38,57 @@ def sendMessage(
     else:
         m = f"تم طلب منتجك ({product.name})"
         m = f"قام ({product.buyer.name}) بـ (شراء/استعارة/الحصول على) منتجك ({product.name}). يرجى التواصل معه لتنسيق التسليم."
-    print("seller fcm is " + str(buyer_user.fcms.all()))
-    for fcm in seller_user.fcms.all():
-        if fcm:
-            message = messaging.Message(
-                notification=messaging.Notification(
-                    title="خبر رائع!",
-                    body=m,
-                ),
-                token=fcm.token,
+
+    if seller_user.notification_settings.private is True:
+        for fcm in seller_user.fcms.all():
+            if fcm:
+                message = messaging.Message(
+                    notification=messaging.Notification(
+                        title="خبر رائع!",
+                        body=m,
+                    ),
+                    token=fcm.token,
+                )
+                messaging.send(message)
+            Notification.objects.create(
+                title="طلب", message=m, user=seller_user, product=product.id
             )
-            messaging.send(message)
-        Notification.objects.create(
-            title="طلب", message=m, user=seller_user, product=product.id
-        )
 
 
+## !!not sure if this optimization is correct
+
+
+## TODO: MAKE SURE THIS WORKS
 def sendPublicMessage(message: str, title: str):
-    messag = messaging.Message(
+    tokens = []
+
+    all_users = User.objects.all()
+    for user in all_users:
+        if user.notification_settings.public is True:
+            tokens.extend(user.fcms.all())
+
+    tokens = [token.token for token in tokens]
+
+    messag = messaging.MulticastMessage(
         notification=messaging.Notification(
             title="title",
             body=message,
         ),
-        topic="public",
+        tokens=tokens,
     )
 
-    messaging.send(messag)
+    messaging.send_multicast(messag)
     Notification.objects.create(title=title, message=message)
+
+
+# def sendPublicMessage(message: str, title: str):
+#     messag = messaging.Message(
+#         notification=messaging.Notification(
+#             title="title",
+#             body=message,
+#         ),
+#         topic="public",
+#     )
+
+#     messaging.send(messag)
+#     Notification.objects.create(title=title, message=message)
