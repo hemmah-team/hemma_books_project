@@ -293,6 +293,20 @@ def registerView(request):
 
 
 @api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
+def deleteAccount(request):
+    user = request.user
+    password = request.data["password"]
+    if user.check_password(password):
+        user.delete()
+        return Response({"detail": "تم حذف الحساب بنجاح."})
+    return Response(
+        {"detail": "كلمة المرور خاطئة."}, status=status.HTTP_401_UNAUTHORIZED
+    )
+
+
+@api_view(["POST"])
 def loginView(request):
     try:
         email = request.data["email"]

@@ -52,10 +52,13 @@ class Category(models.Model):
 
 class Product(models.Model):
     product_status = models.ForeignKey(ProductStatus, on_delete=models.CASCADE)
-    seller = models.ForeignKey(User, on_delete=models.CASCADE)
+    seller = models.ForeignKey(
+        User,
+        on_delete=models.DO_NOTHING,
+    )
     buyer = models.ForeignKey(
         User,
-        on_delete=models.CASCADE,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name="product_buyer",
