@@ -199,7 +199,17 @@ def editProduct(request, pk):
         serializer = UpdateProfileProductSerializer(product, data=tmp, partial=True)
         if serializer.is_valid():
             obj = serializer.save()
+            is_featured = request.data.get("is_featured", None)
+            if is_featured is not None:
+                if obj.is_featured != is_featured:
+                    obj.is_featured = is_featured
+                    obj.save()
 
+            if request.user.is_staff:
+                pass
+                ## !! INFORM USER HERE VIA NOTIFICATION
+                obj.is_pending = False
+                obj.save()
             ser = WholeProductSerializer(obj)
             return Response(ser.data)
         else:
@@ -468,7 +478,9 @@ def filterView(request):
     return res
 
 
-## ! Only Staff Users.
+## !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+## !!!!! Only Staff Users.                                                                                                     !!!!!
+## !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 @api_view()
@@ -511,7 +523,9 @@ def createCategory(request):
         serializer.save()
         return Response(serializer.data)
     else:
-        return Response(serializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)
+        return Response(
+            {"detail": "هذا الصنف مضاف مسبقاً."}, status=status.HTTP_406_NOT_ACCEPTABLE
+        )
 
 
 class ListStaffProducts(ListAPIView):
@@ -537,9 +551,9 @@ class ListStaffPendingProducts(ListAPIView):
         VerificationPermission,
         IsAdminUser,
     ]
-    queryset = Product.objects.filter(
-        is_pending=True,
-    ).order_by("-created_at")
+    queryset = Product.objects.filter(~Q(seller=None) & Q(is_pending=True)).order_by(
+        "-created_at"
+    )
     pagination_class = PageNumberPagination
 
     serializer_class = WholeProductSerializer

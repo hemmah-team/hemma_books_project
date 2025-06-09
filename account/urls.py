@@ -12,6 +12,7 @@ from .views import (
     fetchNotificationsView,
     fetchProfileView,
     listAllUsersView,
+    loginAdminView,
     loginView,
     logoutUser,
     registerView,
@@ -39,6 +40,7 @@ urlpatterns = [
     path("notifications/", fetchNotificationsView),
     path("profile/", fetchProfileView),
     ## ! FOR STAFF ONLY.
+    path("login_admin/", loginAdminView),
     path("send_notification/", sendPublicNotificationView),
     path("list_users/", listAllUsersView.as_view()),
     path("toggle_block/<int:pk>/", toggleUserBlockView),

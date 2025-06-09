@@ -494,7 +494,9 @@ def fetchNotificationsView(request):
     return Response(serializer.data)
 
 
-## ! Only Staff Users.
+## !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+## !!!!! Only Staff Users.                                                                                                     !!!!!
+## !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 class listAllUsersView(ListAPIView):
@@ -554,4 +556,36 @@ def toggleIsFeaturedView(request, pk):
         return Response(
             {"detail": "لم يتم العثور على هذا المنتج."},
             status=status.HTTP_404_NOT_FOUND,
+        )
+
+
+@api_view(["POST"])
+def loginAdminView(request):
+    email = request.data["email"]
+    password = request.data["password"]
+
+    try:
+        user = User.objects.get(email=email, is_staff=True)
+        isCorrect = user.check_password(password)
+        if not isCorrect:
+            return Response(
+                {"detail": "البريد الإلكتروني أو كلمة المرور غير صحيحة."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        token = Token.objects.get(user=user)
+
+        return Response(
+            {
+                "name": user.name,
+                "token": str(token),
+                "phone_number": user.phone_number,
+            }
+        )
+    except User.DoesNotExist:
+        return Response(
+            {
+                "detail": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+            },
+            status=status.HTTP_401_UNAUTHORIZED,
         )

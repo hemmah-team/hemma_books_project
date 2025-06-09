@@ -141,6 +141,9 @@ class UpdateProfileProductSerializer(serializers.ModelSerializer):
             "buyer",
             "is_pending",
         ]
+        extra_kwargs = {
+            "is_pending": {"read_only": True},
+        }
 
     def update(self, instance, validated_data):
         process_info_data = validated_data.pop("process_info", None)
@@ -155,7 +158,6 @@ class UpdateProfileProductSerializer(serializers.ModelSerializer):
         instance.product_status = validated_data.get(
             "product_status", instance.product_status
         )
-        print("categories is " + str(category))
         if category is not None:
             instance.category.set(category)
 
