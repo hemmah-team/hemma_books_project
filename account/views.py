@@ -21,6 +21,7 @@ from products.serializers import WholeProductSerializer
 
 from .models import Fcm, Notification, NotificationSetting, Otp, User
 from .serializers import (
+    ALLOWED_EMAIL_DOMAINS,
     AccountSerializer,
     AccountStaffSerializer,
     NotificationSerializer,
@@ -242,6 +243,12 @@ def verifyOtpView(request):
                 res["detail"] = "تم التحقق من الرمز بنجاح."
 
             if request_type == "change_email":
+                if email.split("@")[-1].lower() not in ALLOWED_EMAIL_DOMAINS:
+                    return Response(
+                        {"detail": "هذا البريد الإلكتروني غير مسموح به."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
                 user_ob.email = email
                 res["detail"] = "تم تحديث البريد الإلكتروني بنجاح."
                 user_ob.save()
@@ -414,7 +421,7 @@ def logoutUser(request):
         try:
             ob = Fcm.objects.filter(token=fcm, user=user)
             ob.delete()
-        except:
+        except Exception:
             pass
         finally:
             return Response({"detail": "تم تسجيل الخروج بنجاح."})

@@ -69,15 +69,18 @@ def sendPublicMessage(message: str, title: str):
 
     tokens = [token.token for token in tokens]
 
-    messag = messaging.MulticastMessage(
-        notification=messaging.Notification(
-            title="title",
-            body=message,
-        ),
-        tokens=tokens,
-    )
-
-    messaging.send_multicast(messag)
+    for token in tokens:
+        messag = messaging.Message(
+            notification=messaging.Notification(
+                title="title",
+                body=message,
+            ),
+            token=token,
+        )
+        try:
+            messaging.send(messag)
+        except Exception:
+            pass
     Notification.objects.create(title=title, message=message)
 
 
