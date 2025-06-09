@@ -54,11 +54,13 @@ class Product(models.Model):
     product_status = models.ForeignKey(ProductStatus, on_delete=models.CASCADE)
     seller = models.ForeignKey(
         User,
-        on_delete=models.DO_NOTHING,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
     )
     buyer = models.ForeignKey(
         User,
-        on_delete=models.DO_NOTHING,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="product_buyer",

@@ -98,7 +98,13 @@ def fetchFavourites(request):
 def fetchSingleProduct(request, pk):
     try:
         product = Product.objects.get(id=pk)
-        same_user = product.seller.email == request.user.email
+        try:
+            same_user = product.seller.email == request.user.email
+        except:
+            try:
+                same_user = product.buyer.email == request.user.email
+            except:
+                same_user = False
         if same_user is False:
             if product.buyer is not None:
                 if product.buyer.email == request.user.email:

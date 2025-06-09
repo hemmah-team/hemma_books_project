@@ -299,6 +299,7 @@ def deleteAccount(request):
     user = request.user
     password = request.data["password"]
     if user.check_password(password):
+        Product.objects.filter(seller=user, is_pending=True).delete()
         user.delete()
         return Response({"detail": "تم حذف الحساب بنجاح."})
     return Response(
