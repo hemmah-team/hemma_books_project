@@ -310,20 +310,29 @@ def getInitital(request):
                 },
                 status=status.HTTP_406_NOT_ACCEPTABLE,
             )
-        token_obj = Token.objects.get(key=request.data["token"])
 
-        user = token_obj.user
-        if user.is_banned:
-            ## user is banned
+        try:
+            token_obj = Token.objects.get(key=request.data["token"])
+
+            user = token_obj.user
+            if user.is_banned:
+                ## user is banned
+                return Response(
+                    {
+                        "detail": "تم حظر حسابك، يرجى التواصل مع الدعم.",
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            else:
+                return serializeInitialData(user)
+                ## user is not banned
+        except Exception:
             return Response(
                 {
-                    "detail": "تم حظر حسابك، يرجى التواصل مع الدعم.",
+                    "detail": "هذا الحساب غير موجود.",
                 },
-                status=status.HTTP_403_FORBIDDEN,
+                status=status.HTTP_401_UNAUTHORIZED,
             )
-        else:
-            return serializeInitialData(user)
-            ## user is not banned
 
     else:
         ## user is anonymous

@@ -56,7 +56,7 @@ def sendMessage(
                         token=fcm.token,
                     )
                     messaging.send(message)
-                except:
+                except Exception:
                     pass
             Notification.objects.create(
                 title="طلب", message=m, user=seller_user, product=product.id
