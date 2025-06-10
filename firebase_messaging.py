@@ -39,17 +39,25 @@ def sendMessage(
         m = f"تم طلب منتجك ({product.name})"
         m = f"قام ({product.buyer.name}) بـ (شراء/استعارة/الحصول على) منتجك ({product.name}). يرجى التواصل معه لتنسيق التسليم."
 
-    if seller_user.notification_settings.private is True:
+    try:
+        notification_settings = seller_user.notification_settings.private is True
+    except Exception:
+        notification_settings = True
+
+    if notification_settings is True:
         for fcm in seller_user.fcms.all():
             if fcm:
-                message = messaging.Message(
-                    notification=messaging.Notification(
-                        title="خبر رائع!",
-                        body=m,
-                    ),
-                    token=fcm.token,
-                )
-                messaging.send(message)
+                try:
+                    message = messaging.Message(
+                        notification=messaging.Notification(
+                            title="خبر رائع!",
+                            body=m,
+                        ),
+                        token=fcm.token,
+                    )
+                    messaging.send(message)
+                except:
+                    pass
             Notification.objects.create(
                 title="طلب", message=m, user=seller_user, product=product.id
             )
