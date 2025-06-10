@@ -10,7 +10,7 @@ from rest_framework.decorators import (
     authentication_classes,
     permission_classes,
 )
-from rest_framework.generics import ListAPIView
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
@@ -307,6 +307,8 @@ def deleteAccount(request):
     password = request.data["password"]
     if user.check_password(password):
         Product.objects.filter(seller=user, is_pending=True).delete()
+        Product.objects.filter(seller=user, buyer=None).delete()
+
         user.delete()
         return Response({"detail": "تم حذف الحساب بنجاح."})
     return Response(
@@ -499,14 +501,43 @@ def fetchNotificationsView(request):
 ## !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
-class listAllUsersView(ListAPIView):
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [
-        IsAdminUser,
-    ]
-    queryset = User.objects.filter(is_verified=True, is_staff=False)
+# class listAllUsersView(ListAPIView):
+#     authentication_classes = [TokenAuthentication]
+#     permission_classes = [
+#         IsAdminUser,
+#     ]
 
-    serializer_class = AccountStaffSerializer
+#     queryset = User.objects.filter(is_verified=True, is_staff=False)
+
+#     serializer_class = AccountStaffSerializer
+#     pagination_class = PageNumberPagination
+
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, VerificationPermission, BanPermission])
+def listAllUsersView(request):
+    data = request.data
+    filters = Q(is_verified=True, is_staff=False)
+    name = data.get("name", None)
+    if name is not None:
+        filters &= Q(name__icontains=name)
+
+    users = User.objects.filter(filters).order_by("-date_joined")
+
+    paginator = PageNumberPagination()
+    page_size_query = request.query_params.get("page_size", None)
+    if page_size_query:
+        paginator.page_size = page_size_query
+
+    results = paginator.paginate_queryset(
+        users,
+        request,
+    )
+    res = paginator.get_paginated_response(
+        AccountStaffSerializer(results, many=True).data,
+    )
+    return res
 
 
 @api_view()
@@ -532,8 +563,10 @@ def toggleUserBlockView(request, pk):
 @permission_classes([IsAuthenticated, IsAdminUser])
 def sendPublicNotificationView(request):
     ## TODO: SEND TOPIC NOTIFICATION
-    sendPublicMessage(message="إعلان", title="هذا الإعلان تجريبي لأغراض تعليمية.")
-    return Response()
+    title = request.data["title"]
+    message = request.data["message"]
+    sendPublicMessage(title=title, message=message)
+    return Response({"detail": "تم إرسال الإشعار بنجاح."})
 
 
 @api_view()

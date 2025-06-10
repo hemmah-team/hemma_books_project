@@ -64,7 +64,10 @@ def sendPublicMessage(message: str, title: str):
 
     all_users = User.objects.all()
     for user in all_users:
-        if user.notification_settings.public is True:
+        try:
+            if user.notification_settings.public is True:
+                tokens.extend(user.fcms.all())
+        except Exception:
             tokens.extend(user.fcms.all())
 
     tokens = [token.token for token in tokens]
@@ -72,7 +75,7 @@ def sendPublicMessage(message: str, title: str):
     for token in tokens:
         messag = messaging.Message(
             notification=messaging.Notification(
-                title="title",
+                title=title,
                 body=message,
             ),
             token=token,

@@ -42,7 +42,7 @@ urlpatterns = [
     ## ! FOR STAFF ONLY.
     path("login_admin/", loginAdminView),
     path("send_notification/", sendPublicNotificationView),
-    path("list_users/", listAllUsersView.as_view()),
+    path("list_users/", listAllUsersView),
     path("toggle_block/<int:pk>/", toggleUserBlockView),
     path("toggle_featured/<int:pk>/", toggleIsFeaturedView),
 ]
