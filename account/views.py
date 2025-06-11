@@ -275,7 +275,15 @@ def verifyOtpView(request):
 
 @api_view(["POST"])
 def registerView(request):
-    serializer = RegisterSerizalizer(data=request.data)
+    try:
+        serializer = RegisterSerizalizer(data=request.data)
+    except Exception:
+        return Response(
+            {
+                "detail": "المعلومات غير صالحة.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
     if serializer.is_valid():
         user = serializer.save()
         token = Token.objects.create(user=user)
