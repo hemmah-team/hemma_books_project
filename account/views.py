@@ -203,7 +203,10 @@ def changeNotificationSettings(request):
             {"detail": "تم تحديث إعدادات الإشعارات بنجاح."},
         )
     except:
-        return Response({"detail": "حدث خطأ ما."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"detail": "حدث خطأ أثناء تحديث الإعدادات."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
 
 @api_view(["POST"])
@@ -250,7 +253,7 @@ def verifyOtpView(request):
             if request_type == "change_email":
                 if email.split("@")[-1].lower() not in ALLOWED_EMAIL_DOMAINS:
                     return Response(
-                        {"detail": "هذا البريد الإلكتروني غير مسموح به."},
+                        {"detail": "نوع البريد الإلكتروني غير مسموح به."},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
@@ -268,7 +271,7 @@ def verifyOtpView(request):
             )
     except Otp.DoesNotExist:
         return Response(
-            {"detail": "يرجى إرسال رمز التحقق أولاً."},
+            {"detail": "يرجى طلب رمز تحقق أولاً."},
             status=status.HTTP_401_UNAUTHORIZED,
         )
 
@@ -277,39 +280,40 @@ def verifyOtpView(request):
 def registerView(request):
     try:
         serializer = RegisterSerizalizer(data=request.data)
-    except Exception:
+
+        if serializer.is_valid():
+            user = serializer.save()
+            token = Token.objects.create(user=user)
+            tmp = serializer.data
+
+            tmp["token"] = token.key
+
+            return Response(tmp)
+        else:
+            email_error = serializer.errors.get("email")
+            phone_number_error = serializer.errors.get("phone_number")
+            if email_error is not None:
+                return Response(
+                    {"detail": "هذا البريد الإلكتروني مسجّل بالفعل."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            elif phone_number_error is not None:
+                return Response(
+                    {"detail": "رقم الهاتف هذا مسجّل بالفعل."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            else:
+                return Response(
+                    serializer.errors,
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+    except:
         return Response(
             {
-                "detail": "المعلومات غير صالحة.",
+                "detail": "البيانات المدخلة مسجلة مسبقاً.",
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
-    if serializer.is_valid():
-        user = serializer.save()
-        token = Token.objects.create(user=user)
-        tmp = serializer.data
-
-        tmp["token"] = token.key
-
-        return Response(tmp)
-    else:
-        email_error = serializer.errors.get("email")
-        phone_number_error = serializer.errors.get("phone_number")
-        if email_error is not None:
-            return Response(
-                {"detail": "هذا البريد الإلكتروني مسجّل بالفعل."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        elif phone_number_error is not None:
-            return Response(
-                {"detail": "رقم الهاتف هذا مسجّل بالفعل."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        else:
-            return Response(
-                serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST,
-            )
 
 
 @api_view(["POST"])
@@ -325,7 +329,7 @@ def deleteAccount(request):
         user.delete()
         return Response({"detail": "تم حذف الحساب بنجاح."})
     return Response(
-        {"detail": "كلمة المرور خاطئة."}, status=status.HTTP_401_UNAUTHORIZED
+        {"detail": "كلمة المرور غير صحيحة."}, status=status.HTTP_401_UNAUTHORIZED
     )
 
 
@@ -355,7 +359,7 @@ def loginView(request):
         if user.is_banned is True:
             return Response(
                 {
-                    "detail": "تم حظر حسابك، يرجى التواصل مع الدعم.",
+                    "detail": "تم حظر حسابك. يرجى التواصل مع فريق الدعم.",
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
@@ -479,7 +483,7 @@ def changePasswordOrResetView(request):
                 otp.delete()
                 user.set_password(new_password)
                 user.save()
-                return Response({"detail": "تم إعادة ضبط كلمة المرور بنجاح."})
+                return Response({"detail": "تم إعادة تعيين كلمة المرور بنجاح."})
             except Otp.DoesNotExist:
                 return Response(
                     {
@@ -579,13 +583,9 @@ def toggleIsFeaturedView(request, pk):
         product.is_featured = not product.is_featured
         product.save()
         if product.is_featured:
-            return Response(
-                {"detail": "تمت إضافة هذا المنتج إلى القائمة المميزة بنجاح."}
-            )
+            return Response({"detail": "تمت إضافة المنتج إلى القائمة المميزة بنجاح."})
         else:
-            return Response(
-                {"detail": "تمت إزالة هذا المنتج من القائمة المميزة بنجاح."}
-            )
+            return Response({"detail": "تمت إزالة المنتج من القائمة المميزة بنجاح."})
     except Product.DoesNotExist:
         return Response(
             {"detail": "لم يتم العثور على هذا المنتج."},
