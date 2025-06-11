@@ -28,12 +28,11 @@ if not firebase_admin._apps:
 
 def sendMessage(
     seller_user: User,
-    buyer_user: User,
     product: Product,
     isApprove: bool = False,
 ):
     if isApprove:
-        m = f"لقد تم مراجعة والموافقة على منتجك ({product.name}). يمكنك الآن رؤيته متاحًا للجميع في متجرنا!"
+        m = f"لقد تم مراجعة والموافقة على منتجك ({product.name}). أصبح الآن متاحاً للجميع في متجرنا!"
 
     else:
         m = f"تم طلب منتجك ({product.name})"
@@ -58,9 +57,9 @@ def sendMessage(
                     messaging.send(message)
                 except Exception:
                     pass
-            Notification.objects.create(
-                title="طلب", message=m, user=seller_user, product=product.id
-            )
+    Notification.objects.create(
+        title="طلب", message=m, user=seller_user, product=product.id
+    )
 
 
 ## !!not sure if this optimization is correct

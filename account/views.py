@@ -194,11 +194,16 @@ def changeNotificationSettings(request):
     public = request.data["public"]
 
     user = request.user
-    NotificationSetting.objects.filter(user=user).update(private=private, public=public)
+    try:
+        NotificationSetting.objects.filter(user=user).update(
+            private=private, public=public
+        )
 
-    return Response(
-        {"detail": "تم تحديث إعدادات الإشعارات بنجاح."},
-    )
+        return Response(
+            {"detail": "تم تحديث إعدادات الإشعارات بنجاح."},
+        )
+    except:
+        return Response({"detail": "حدث خطأ ما."}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])
@@ -499,18 +504,6 @@ def fetchNotificationsView(request):
 ## !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ## !!!!! Only Staff Users.                                                                                                     !!!!!
 ## !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
-# class listAllUsersView(ListAPIView):
-#     authentication_classes = [TokenAuthentication]
-#     permission_classes = [
-#         IsAdminUser,
-#     ]
-
-#     queryset = User.objects.filter(is_verified=True, is_staff=False)
-
-#     serializer_class = AccountStaffSerializer
-#     pagination_class = PageNumberPagination
 
 
 @api_view(["POST"])

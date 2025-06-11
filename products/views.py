@@ -206,10 +206,12 @@ def editProduct(request, pk):
                     obj.save()
 
             if request.user.is_staff:
-                pass
-                ## !! INFORM USER HERE VIA NOTIFICATION
                 obj.is_pending = False
                 obj.save()
+
+                ## !! INFORM USER HERE VIA NOTIFICATION
+                sendMessage(seller_user=obj.seller, product=obj, isApprove=True)
+
             ser = WholeProductSerializer(obj)
             return Response(ser.data)
         else:
@@ -290,7 +292,7 @@ def buyProduct(request, pk):
     product.save()
 
     ## TODO: SEND FCM NOTIFICATION
-    sendMessage(buyer_user=request.user, seller_user=product.seller, product=product)
+    sendMessage(seller_user=product.seller, product=product)
     ser = WholeProductSerializer(product)
 
     return Response(ser.data)
@@ -325,7 +327,6 @@ def getInitital(request):
                 )
             else:
                 return serializeInitialData(user)
-                ## user is not banned
         except Exception:
             return Response(
                 {
@@ -363,12 +364,17 @@ def serializeInitialData(user) -> Response:
             }
         )
     else:
+        ## !! add email, phonenumber and name
+
         return Response(
             {
                 "categories": category,
                 "cities": city,
                 "product_status": product_status,
                 "notification_settings": notifications,
+                "name": user.name,
+                "email": user.email,
+                "phone_number": user.phone_number,
             }
         )
 
@@ -508,7 +514,6 @@ def approveProduct(request, pk):
 
         ## TODO: SEND FCM NOTIFICATION
         sendMessage(
-            buyer_user=request.user,
             seller_user=product.seller,
             product=product,
             isApprove=True,
