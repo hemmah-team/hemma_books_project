@@ -65,6 +65,16 @@ class ProcessInfoSerializer(serializers.ModelSerializer):
 
 
 ### ?? USED FOR HOME, FAVOURITE, FILTER
+class MostBasicProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = [
+            "id",
+            "name",
+        ]
+
+
+### ?? USED FOR HOME, FAVOURITE, FILTER
 class BasicProductSerializer(serializers.ModelSerializer):
     address = ExplicitAddressSerializer()
     process_info = ProcessInfoSerializer()

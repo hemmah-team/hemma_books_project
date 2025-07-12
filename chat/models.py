@@ -21,7 +21,10 @@ class Conversation(models.Model):
 
 
 class Message(models.Model):
-    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE)
+    conversation = models.ForeignKey(
+        Conversation, on_delete=models.CASCADE, related_name="messages"
+    )
     text = models.TextField()
     image = models.ImageField(null=True, blank=True, upload_to="media")
-    created_at = models.DateTimeField(auto_created=True)
+    created_at = models.DateTimeField(auto_created=True, auto_now_add=True)
+    sender = models.ForeignKey(User, on_delete=models.CASCADE)
