@@ -1,4 +1,5 @@
 from django.db.models.query import QuerySet
+from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import (
     api_view,
@@ -29,39 +30,49 @@ def _createMessage(conversation, message, image, second_user):
 def getConversations(request):
     user = request.user
     conversations = user.sender.all().union(user.receiver.all())
-    ser = ConversationSerializer(conversations, many=True)
-    return Response(ser.data)
+    conversation_serializer = ConversationSerializer(conversations, many=True)
+
+    return Response(conversation_serializer.data)
 
 
 @api_view()
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
-def getMessages(request, productPK):
-    product = Product.objects.get(id=productPK)
-    ## PRODUCT'S SELLER
-    first_user = product.seller
-    ## CHATTER PERSON
-    second_user = request.user
+def getMessages(request):
+    user = request.user
+    conversation_id = request.query_params.get("conversation_id")
 
-    try:
-        try:
-            conversation = Conversation.objects.get(
-                first_person=first_user, second_person=second_user, product=product
-            )
+    conversation = Conversation.objects.get(id=conversation_id)
 
-        except Conversation.DoesNotExist:
-            conversation = Conversation.objects.get(
-                first_person=second_user, second_person=first_user, product=product
-            )
-
-        messages: QuerySet = conversation.messages.all()
-
-        serializer = MessageSerializer(
-            messages, many=True, context={"user_id": second_user.id}
+    if conversation.first_person != user and conversation.second_person != user:
+        return Response(
+            {"detail": "لا يمكنك الوصول إلى هذه المحادثة."},
+            status=status.HTTP_403_FORBIDDEN,
         )
-        return Response(serializer.data)
-    except Conversation.DoesNotExist:
-        return Response([])
+    messages: QuerySet = conversation.messages.all()
+
+    serializer = MessageSerializer(messages, many=True, context={"user_id": user.id})
+    return Response(serializer.data)
+
+    # product = Product.objects.get(id=productPK)
+    # ## PRODUCT'S SELLER
+    # first_user = product.seller
+    # ## CHATTER PERSON
+    # second_user = request.user
+
+    # try:
+    #     try:
+    #         conversation = Conversation.objects.get(
+    #             first_person=first_user, second_person=second_user, product=product
+    #         )
+
+    #     except Conversation.DoesNotExist:
+    #         conversation = Conversation.objects.get(
+    #             first_person=second_user, second_person=first_user, product=product
+    #         )
+
+    # except Conversation.DoesNotExist:
+    #     return Response([])
 
 
 @api_view(["POST"])

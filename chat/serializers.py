@@ -14,11 +14,13 @@ class ConversationSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         tmp = super().to_representation(instance)
-
+        message = instance.messages.all().order_by("-created_at")[0]
+        message = message.text
         x = {
             "conversation_id": tmp["id"],
             "product_id": tmp["product"]["id"],
             "product_name": tmp["product"]["name"],
+            "last_message": str(message),
         }
 
         return x
