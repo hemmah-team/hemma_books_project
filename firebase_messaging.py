@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import firebase_admin
 from firebase_admin import credentials, messaging
 
@@ -94,14 +96,20 @@ def sendPublicMessage(message: str, title: str):
     Notification.objects.create(title=title, message=message)
 
 
-# def sendPublicMessage(message: str, title: str):
-#     messag = messaging.Message(
-#         notification=messaging.Notification(
-#             title="title",
-#             body=message,
-#         ),
-#         topic="public",
-#     )
-
-#     messaging.send(messag)
-#     Notification.objects.create(title=title, message=message)
+def sendPrivateMessage(message: str, conversation_id: str, reciever_user: User):
+    tokens = [token.token for token in reciever_user.fcms.all()]
+    for token in tokens:
+        print("token is " + str(token))
+        messag = messaging.Message(
+            data={
+                "conversation_id": str(conversation_id),
+                "sent_date": str(datetime.now()),
+            },
+            notification=messaging.Notification(
+                title="رسالة خاصة",
+                body=message,
+            ),
+            token=token,
+        )
+        messaging.send(messag)
+        print("heree")

@@ -9,6 +9,7 @@ from rest_framework.decorators import (
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from firebase_messaging import sendPrivateMessage
 from permissions import BanPermission, VerificationPermission
 from products.models import Product
 
@@ -16,12 +17,28 @@ from .models import Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer
 
 
-def _createMessage(conversation, message, image, second_user):
-    Message.objects.create(
-        conversation=conversation, text=message, image=image, sender=second_user
-    )
+def _createMessage(conversation, message, image, second_user, first_user):
+    ### TODO SEND FCM
+    try:
+        ## TODO: CHANGE THIS TO FIRST_USER
+        sendPrivateMessage(
+            reciever_user=second_user,
+            message=message,
+            conversation_id=conversation.id,
+        )
+        Message.objects.create(
+            conversation=conversation,
+            text=message,
+            image=image,
+            sender=second_user,
+        )
 
-    return Response({"detail": "تم إرسالة الرسالة بنجاح."})
+        return Response({"detail": "تم إرسالة الرسالة بنجاح."})
+    except:
+        return Response(
+            {"detail": "حدث خطأ ما."},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
 
 @api_view()
@@ -103,6 +120,7 @@ def sendMessage(request):
             image=image,
             second_user=second_user,
             message=message,
+            first_user=first_user,
         )
 
     except Conversation.DoesNotExist:
@@ -115,4 +133,5 @@ def sendMessage(request):
             image=image,
             second_user=second_user,
             message=message,
+            first_user=first_user,
         )
