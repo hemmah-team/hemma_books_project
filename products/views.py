@@ -84,7 +84,8 @@ def fetchFavourites(request):
 
     for id in lst:
         try:
-            objects.append(product_manager.get(id=id))
+            product = product_manager.get(id=id, buyer=None)
+            objects.append(product)
         except Product.DoesNotExist:
             pass
 

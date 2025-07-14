@@ -22,7 +22,7 @@ def _createMessage(conversation, message, image, second_user, first_user):
     try:
         ## TODO: CHANGE THIS TO FIRST_USER
         sendPrivateMessage(
-            reciever_user=second_user,
+            reciever_user=first_user,
             message=message,
             conversation_id=conversation.id,
         )
@@ -96,42 +96,59 @@ def getMessages(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
 def sendMessage(request):
+    conversation_id = request.query_params.get("conversation_id", None)
     product_id = request.data.get("product_id")
     message = request.data.get("message")
     image = request.data.get("image", None)
-    product = Product.objects.get(id=product_id)
-    ## PRODUCT'S SELLER
-    first_user = product.seller
-    ## CHATTER PERSON
-    second_user = request.user
+    sender_user = request.user
 
-    try:
+    if conversation_id is not None:
+        conversation = Conversation.objects.get(id=conversation_id)
+        if conversation.first_person.id == sender_user.id:
+            first_user = conversation.second_person
+        else:
+            first_user = conversation.first_person
+
+        return _createMessage(
+            conversation=conversation,
+            image=image,
+            second_user=sender_user,
+            message=message,
+            first_user=first_user,
+        )
+
+    else:
+        product = Product.objects.get(id=product_id)
+        ## PRODUCT'S SELLER
+        first_user = product.seller
+
         try:
-            conversation = Conversation.objects.get(
-                first_person=first_user, second_person=second_user, product=product
+            try:
+                conversation = Conversation.objects.get(
+                    first_person=first_user, second_person=sender_user, product=product
+                )
+            except Conversation.DoesNotExist:
+                conversation = Conversation.objects.get(
+                    first_person=sender_user, second_person=first_user, product=product
+                )
+
+            return _createMessage(
+                conversation=conversation,
+                image=image,
+                second_user=sender_user,
+                message=message,
+                first_user=first_user,
             )
+
         except Conversation.DoesNotExist:
-            conversation = Conversation.objects.get(
-                first_person=second_user, second_person=first_user, product=product
+            Conversation.objects.create(
+                first_person=first_user, second_person=sender_user, product=product
             )
 
-        return _createMessage(
-            conversation=conversation,
-            image=image,
-            second_user=second_user,
-            message=message,
-            first_user=first_user,
-        )
-
-    except Conversation.DoesNotExist:
-        Conversation.objects.create(
-            first_person=first_user, second_person=second_user, product=product
-        )
-
-        return _createMessage(
-            conversation=conversation,
-            image=image,
-            second_user=second_user,
-            message=message,
-            first_user=first_user,
-        )
+            return _createMessage(
+                conversation=conversation,
+                image=image,
+                second_user=sender_user,
+                message=message,
+                first_user=first_user,
+            )
