@@ -99,7 +99,6 @@ def sendPublicMessage(message: str, title: str):
 def sendPrivateMessage(message: str, conversation_id: str, reciever_user: User):
     tokens = [token.token for token in reciever_user.fcms.all()]
     for token in tokens:
-        print("token is " + str(token))
         messag = messaging.Message(
             data={
                 "conversation_id": str(conversation_id),

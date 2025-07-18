@@ -71,26 +71,6 @@ def getMessages(request):
     serializer = MessageSerializer(messages, many=True, context={"user_id": user.id})
     return Response(serializer.data)
 
-    # product = Product.objects.get(id=productPK)
-    # ## PRODUCT'S SELLER
-    # first_user = product.seller
-    # ## CHATTER PERSON
-    # second_user = request.user
-
-    # try:
-    #     try:
-    #         conversation = Conversation.objects.get(
-    #             first_person=first_user, second_person=second_user, product=product
-    #         )
-
-    #     except Conversation.DoesNotExist:
-    #         conversation = Conversation.objects.get(
-    #             first_person=second_user, second_person=first_user, product=product
-    #         )
-
-    # except Conversation.DoesNotExist:
-    #     return Response([])
-
 
 @api_view(["POST"])
 @authentication_classes([TokenAuthentication])
