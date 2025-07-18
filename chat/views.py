@@ -46,7 +46,8 @@ def _createMessage(conversation, message, image, second_user, first_user):
 @permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
 def getConversations(request):
     user = request.user
-    conversations = user.sender.all().union(user.receiver.all())
+    ## TODO: THIS IS NOT FULL, NEEDS FIXING
+    conversations = user.chatter.all()
     conversation_serializer = ConversationSerializer(conversations, many=True)
 
     return Response(conversation_serializer.data)
@@ -57,15 +58,24 @@ def getConversations(request):
 @permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
 def getMessages(request):
     user = request.user
-    conversation_id = request.query_params.get("conversation_id")
+    conversation_id = request.query_params.get("conversation_id", None)
+    product_id = request.query_params.get("product_id", None)
+    if conversation_id is not None:
+        conversation = Conversation.objects.get(id=conversation_id)
 
-    conversation = Conversation.objects.get(id=conversation_id)
+        if conversation.chatter != user and conversation.product.seller != user:
+            return Response(
+                {"detail": "لا يمكنك الوصول إلى هذه المحادثة."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
-    if conversation.first_person != user and conversation.second_person != user:
-        return Response(
-            {"detail": "لا يمكنك الوصول إلى هذه المحادثة."},
-            status=status.HTTP_403_FORBIDDEN,
-        )
+    else:
+        product = Product.objects.get(id=product_id)
+        try:
+            conversation = Conversation.objects.get(product=product, chatter=user)
+        except Conversation.DoesNotExist:
+            return Response([])
+
     messages: QuerySet = conversation.messages.all()
 
     serializer = MessageSerializer(messages, many=True, context={"user_id": user.id})
@@ -77,17 +87,17 @@ def getMessages(request):
 @permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
 def sendMessage(request):
     conversation_id = request.query_params.get("conversation_id", None)
-    product_id = request.data.get("product_id")
+    product_id = request.query_params.get("product_id", None)
     message = request.data.get("message")
     image = request.data.get("image", None)
     sender_user = request.user
 
     if conversation_id is not None:
         conversation = Conversation.objects.get(id=conversation_id)
-        if conversation.first_person.id == sender_user.id:
-            first_user = conversation.second_person
+        if conversation.chatter.id == sender_user.id:
+            first_user = conversation.product.seller
         else:
-            first_user = conversation.first_person
+            first_user = sender_user
 
         return _createMessage(
             conversation=conversation,
@@ -103,14 +113,9 @@ def sendMessage(request):
         first_user = product.seller
 
         try:
-            try:
-                conversation = Conversation.objects.get(
-                    first_person=first_user, second_person=sender_user, product=product
-                )
-            except Conversation.DoesNotExist:
-                conversation = Conversation.objects.get(
-                    first_person=sender_user, second_person=first_user, product=product
-                )
+            conversation = Conversation.objects.get(
+                chatter=sender_user, product=product
+            )
 
             return _createMessage(
                 conversation=conversation,
@@ -121,8 +126,10 @@ def sendMessage(request):
             )
 
         except Conversation.DoesNotExist:
-            Conversation.objects.create(
-                first_person=first_user, second_person=sender_user, product=product
+            ### !!!! HERE CONVERSATION DOES NOT EXIST
+            ### !!!! REQUEST USER IS CHATTER
+            conversation = Conversation.objects.create(
+                chatter=sender_user, product=product
             )
 
             return _createMessage(

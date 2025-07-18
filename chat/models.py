@@ -6,11 +6,8 @@ from products.models import Product
 
 
 class Conversation(models.Model):
-    first_person = models.ForeignKey(
-        User, on_delete=models.SET_NULL, blank=True, null=True, related_name="sender"
-    )
-    second_person = models.ForeignKey(
-        User, on_delete=models.SET_NULL, blank=True, null=True, related_name="receiver"
+    chatter = models.ForeignKey(
+        User, on_delete=models.SET_NULL, related_name="chatter", null=True
     )
     product = models.ForeignKey(
         Product,
