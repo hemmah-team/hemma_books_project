@@ -49,7 +49,8 @@ def _createMessage(conversation, message, image, second_user, first_user):
 def getConversations(request):
     user = request.user
     ## TODO: THIS IS NOT FULL, NEEDS FIXING
-    conversations = user.chatter.all()
+    conversations = (user.chatter.all()).filter(support=False)
+
     ## !! START OF TEST
     products = Product.objects.filter(seller=user)
     for product in products:
@@ -68,24 +69,33 @@ def getMessages(request):
     user = request.user
     conversation_id = request.query_params.get("conversation_id", None)
     product_id = request.query_params.get("product_id", None)
-    if conversation_id is not None:
-        conversation = Conversation.objects.get(id=conversation_id)
+    for_support = request.query_params.get("support", None)
 
-        if conversation.chatter != user and conversation.product.seller != user:
-            return Response(
-                {"detail": "لا يمكنك الوصول إلى هذه المحادثة."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
-    else:
-        product = Product.objects.get(id=product_id)
+    if for_support:
         try:
-            conversation = Conversation.objects.get(product=product, chatter=user)
+            conversation = Conversation.objects.get(chatter=user, support=True)
+
         except Conversation.DoesNotExist:
             return Response([])
 
-    messages: QuerySet = conversation.messages.all()
+    else:
+        if conversation_id is not None:
+            conversation = Conversation.objects.get(id=conversation_id)
 
+            if conversation.chatter != user and conversation.product.seller != user:
+                return Response(
+                    {"detail": "لا يمكنك الوصول إلى هذه المحادثة."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+        else:
+            product = Product.objects.get(id=product_id)
+            try:
+                conversation = Conversation.objects.get(product=product, chatter=user)
+            except Conversation.DoesNotExist:
+                return Response([])
+
+    messages: QuerySet = conversation.messages.all()
     serializer = MessageSerializer(messages, many=True, context={"user_id": user.id})
     return Response(serializer.data)
 

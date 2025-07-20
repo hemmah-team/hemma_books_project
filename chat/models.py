@@ -17,6 +17,8 @@ class Conversation(models.Model):
         related_name="product_chatter",
     )
 
+    support = models.BooleanField(default=False)
+
 
 class Message(models.Model):
     conversation = models.ForeignKey(

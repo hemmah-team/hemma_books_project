@@ -15,7 +15,9 @@ class ConversationSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         tmp = super().to_representation(instance)
         message = instance.messages.all().order_by("-created_at")[0]
+        print(f"tmp is is {tmp}")
         message = message.text
+        ## TODO: HERE WILL RESULT IN ERROR IF PRODUCT IS DELETED
         x = {
             "conversation_id": tmp["id"],
             "product_id": tmp["product"]["id"],
