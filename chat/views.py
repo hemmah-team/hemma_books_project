@@ -33,7 +33,9 @@ def _createMessage(conversation, message, image, second_user, first_user):
             sender=second_user,
         )
 
-        return Response({"detail": "تم إرسالة الرسالة بنجاح."})
+        return Response(
+            {"conversation_id": conversation.id, "product_id": conversation.product.id}
+        )
     except:
         return Response(
             {"detail": "حدث خطأ ما."},
@@ -48,6 +50,12 @@ def getConversations(request):
     user = request.user
     ## TODO: THIS IS NOT FULL, NEEDS FIXING
     conversations = user.chatter.all()
+    ## !! START OF TEST
+    products = Product.objects.filter(seller=user)
+    for product in products:
+        conversations = conversations.union(product.product_chatter.all())
+
+    ## !! END OF TEST
     conversation_serializer = ConversationSerializer(conversations, many=True)
 
     return Response(conversation_serializer.data)
@@ -126,8 +134,8 @@ def sendMessage(request):
             )
 
         except Conversation.DoesNotExist:
-            ### !!!! HERE CONVERSATION DOES NOT EXIST
-            ### !!!! REQUEST USER IS CHATTER
+            ################## !!!! HERE CONVERSATION DOES NOT EXIST ############
+            ################## !!!! REQUEST USER IS CHATTER #####################
             conversation = Conversation.objects.create(
                 chatter=sender_user, product=product
             )
