@@ -34,8 +34,12 @@ class MessageSerializer(serializers.ModelSerializer):
         exclude = ["conversation"]
 
     def to_representation(self, instance):
+        from_support = instance.conversation.support
         initial = super().to_representation(instance)
+
         user_id = self.context.get("user_id")
         if user_id == initial.get("sender"):
             initial.pop("sender")
+        if from_support is True and initial.get("sender", None) is not None:
+            initial["sender"] = 0
         return initial

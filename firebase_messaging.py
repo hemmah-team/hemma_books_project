@@ -112,4 +112,3 @@ def sendPrivateMessage(message: str, conversation_id: str, reciever_user: User):
             token=token,
         )
         messaging.send(messag)
-        print("heree")

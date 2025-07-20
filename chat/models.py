@@ -27,4 +27,4 @@ class Message(models.Model):
     text = models.TextField()
     image = models.ImageField(null=True, blank=True, upload_to="media")
     created_at = models.DateTimeField(auto_created=True, auto_now_add=True)
-    sender = models.ForeignKey(User, on_delete=models.CASCADE)
+    sender = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)

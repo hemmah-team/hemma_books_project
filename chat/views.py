@@ -17,15 +17,16 @@ from .models import Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer
 
 
-def _createMessage(conversation, message, image, second_user, first_user):
+def _createMessage(conversation, message, image, second_user, first_user, is_support):
     ### TODO SEND FCM
     try:
         ## TODO: CHANGE THIS TO FIRST_USER
-        sendPrivateMessage(
-            reciever_user=first_user,
-            message=message,
-            conversation_id=conversation.id,
-        )
+        if first_user is not None:
+            sendPrivateMessage(
+                reciever_user=first_user,
+                message=message,
+                conversation_id=conversation.id,
+            )
         Message.objects.create(
             conversation=conversation,
             text=message,
@@ -33,9 +34,22 @@ def _createMessage(conversation, message, image, second_user, first_user):
             sender=second_user,
         )
 
-        return Response(
-            {"conversation_id": conversation.id, "product_id": conversation.product.id}
-        )
+        ## !! COULD REMOVE PRODUCT ID FROM RESPONSE IT SEEMS USELESS
+
+        if is_support:
+            return Response(
+                {
+                    "conversation_id": conversation.id,
+                    # "product_id": conversation.product.id,
+                }
+            )
+        else:
+            return Response(
+                {
+                    "conversation_id": conversation.id,
+                    "product_id": conversation.product.id,
+                }
+            )
     except:
         return Response(
             {"detail": "حدث خطأ ما."},
@@ -106,34 +120,52 @@ def getMessages(request):
 def sendMessage(request):
     conversation_id = request.query_params.get("conversation_id", None)
     product_id = request.query_params.get("product_id", None)
+    for_support = request.query_params.get("support", None)
+
     message = request.data.get("message")
     image = request.data.get("image", None)
     sender_user = request.user
 
-    if conversation_id is not None:
-        conversation = Conversation.objects.get(id=conversation_id)
-        if conversation.chatter.id == sender_user.id:
-            first_user = conversation.product.seller
-        else:
-            first_user = sender_user
+    ## !! START OF NEW TEST FOR SENDING
+    if for_support:
+        try:
+            conversation = Conversation.objects.get(id=conversation_id)
+            if sender_user.is_staff is True:
+                sender_user = None
+                first_user = conversation.chatter
+            else:
+                first_user = None
+            return _createMessage(
+                conversation=conversation,
+                image=image,
+                second_user=sender_user,
+                message=message,
+                first_user=first_user,
+                is_support=True,
+            )
+        except Conversation.DoesNotExist:
+            conversation = Conversation.objects.create(
+                chatter=sender_user, support=True
+            )
 
-        return _createMessage(
-            conversation=conversation,
-            image=image,
-            second_user=sender_user,
-            message=message,
-            first_user=first_user,
-        )
+            return _createMessage(
+                conversation=conversation,
+                image=image,
+                second_user=sender_user,
+                message=message,
+                first_user=None,
+                is_support=True,
+            )
+
+    ## !! END OF NEW TEST FOR SENDING
 
     else:
-        product = Product.objects.get(id=product_id)
-        ## PRODUCT'S SELLER
-        first_user = product.seller
-
-        try:
-            conversation = Conversation.objects.get(
-                chatter=sender_user, product=product
-            )
+        if conversation_id is not None:
+            conversation = Conversation.objects.get(id=conversation_id)
+            if conversation.chatter.id == sender_user.id:
+                first_user = conversation.product.seller
+            else:
+                first_user = sender_user
 
             return _createMessage(
                 conversation=conversation,
@@ -143,17 +175,35 @@ def sendMessage(request):
                 first_user=first_user,
             )
 
-        except Conversation.DoesNotExist:
-            ################## !!!! HERE CONVERSATION DOES NOT EXIST ############
-            ################## !!!! REQUEST USER IS CHATTER #####################
-            conversation = Conversation.objects.create(
-                chatter=sender_user, product=product
-            )
+        else:
+            product = Product.objects.get(id=product_id)
+            ## PRODUCT'S SELLER
+            first_user = product.seller
 
-            return _createMessage(
-                conversation=conversation,
-                image=image,
-                second_user=sender_user,
-                message=message,
-                first_user=first_user,
-            )
+            try:
+                conversation = Conversation.objects.get(
+                    chatter=sender_user, product=product
+                )
+
+                return _createMessage(
+                    conversation=conversation,
+                    image=image,
+                    second_user=sender_user,
+                    message=message,
+                    first_user=first_user,
+                )
+
+            except Conversation.DoesNotExist:
+                ################## !!!! HERE CONVERSATION DOES NOT EXIST ############
+                ################## !!!! REQUEST USER IS CHATTER #####################
+                conversation = Conversation.objects.create(
+                    chatter=sender_user, product=product
+                )
+
+                return _createMessage(
+                    conversation=conversation,
+                    image=image,
+                    second_user=sender_user,
+                    message=message,
+                    first_user=first_user,
+                )
