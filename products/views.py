@@ -39,9 +39,28 @@ FIELDS2 = ["process_info", "address", "category", "university_info"]
 
 
 @api_view()
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
+@authentication_classes(
+    [
+        TokenAuthentication,
+    ]
+)
 def ListAllProducts(request):
+    try:
+        user = request.user
+        user.auth_token
+
+        if not user.is_verified:
+            return Response(
+                {"detail": "You Are Not Verified."}, status=status.HTTP_403_FORBIDDEN
+            )
+        if user.is_banned:
+            return Response(
+                {"detail": "You Are Banned."}, status=status.HTTP_403_FORBIDDEN
+            )
+
+    except:
+        pass
+
     querysetFeatured = Product.objects.filter(
         is_pending=False, buyer=None, is_featured=True
     ).order_by(
@@ -70,14 +89,33 @@ def ListAllProducts(request):
     ser4 = BasicProductSerializer(querysetLend, many=True)
 
     return Response(
-        {"featured": ser1.data, "free": ser2.data, "paid": ser3.data, "lend": ser4.data}
+        {
+            "featured": ser1.data,
+            "free": ser2.data,
+            "paid": ser3.data,
+            "lend": ser4.data,
+        }
     )
 
 
 @api_view(["POST"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
 def fetchFavourites(request):
+    try:
+        user = request.user
+        user.auth_token
+
+        if not user.is_verified:
+            return Response(
+                {"detail": "You Are Not Verified."}, status=status.HTTP_403_FORBIDDEN
+            )
+        if user.is_banned:
+            return Response(
+                {"detail": "You Are Banned."}, status=status.HTTP_403_FORBIDDEN
+            )
+
+    except:
+        pass
     lst = request.data["list"]
     product_manager = Product.objects
     objects = []
@@ -95,8 +133,22 @@ def fetchFavourites(request):
 
 @api_view()
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
 def fetchSingleProduct(request, pk):
+    try:
+        user = request.user
+        user.auth_token
+
+        if not user.is_verified:
+            return Response(
+                {"detail": "You Are Not Verified."}, status=status.HTTP_403_FORBIDDEN
+            )
+        if user.is_banned:
+            return Response(
+                {"detail": "You Are Banned."}, status=status.HTTP_403_FORBIDDEN
+            )
+
+    except:
+        pass
     try:
         product = Product.objects.get(id=pk)
         try:
@@ -382,8 +434,22 @@ def serializeInitialData(user) -> Response:
 
 @api_view(["POST"])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated, VerificationPermission, BanPermission])
 def filterView(request):
+    try:
+        user = request.user
+        user.auth_token
+
+        if not user.is_verified:
+            return Response(
+                {"detail": "You Are Not Verified."}, status=status.HTTP_403_FORBIDDEN
+            )
+        if user.is_banned:
+            return Response(
+                {"detail": "You Are Banned."}, status=status.HTTP_403_FORBIDDEN
+            )
+
+    except:
+        pass
     data = request.data
     name = data.get("name", None)
     sub_name = data.get("sub_name", None)
