@@ -17,7 +17,10 @@ from .models import Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer
 
 
-def _createMessage(conversation, message, image, second_user, first_user, is_support):
+def _createMessage(
+    conversation, message, image, second_user, first_user, is_support=False
+):
+    # 1 + ""
     ### TODO SEND FCM
     try:
         ## TODO: CHANGE THIS TO FIRST_USER
@@ -129,11 +132,14 @@ def sendMessage(request):
     ## !! START OF NEW TEST FOR SENDING
     if for_support:
         try:
-            conversation = Conversation.objects.get(id=conversation_id)
             if sender_user.is_staff is True:
+                conversation = Conversation.objects.get(id=conversation_id)
                 sender_user = None
                 first_user = conversation.chatter
             else:
+                conversation = Conversation.objects.get(
+                    chatter=sender_user, support=True
+                )
                 first_user = None
             return _createMessage(
                 conversation=conversation,

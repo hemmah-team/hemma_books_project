@@ -40,6 +40,9 @@ class MessageSerializer(serializers.ModelSerializer):
         user_id = self.context.get("user_id")
         if user_id == initial.get("sender"):
             initial.pop("sender")
-        if from_support is True and initial.get("sender", None) is not None:
-            initial["sender"] = 0
+        if from_support is True:
+            sender = initial.get("sender", -100)
+            if sender is None:
+                initial["sender"] = 0
+
         return initial
