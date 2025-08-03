@@ -5,7 +5,6 @@ from .views import (
     ListStaffPendingProducts,
     ListStaffProducts,
     approveProduct,
-    buyProduct,
     createCategory,
     createNewProduct,
     deleteProduct,
@@ -24,7 +23,6 @@ urlpatterns = [
     path("create/", createNewProduct),
     path("edit/<int:pk>/", editProduct),
     path("delete/<int:pk>/", deleteProduct),
-    path("buy/<int:pk>/", buyProduct),
     path("filter/", filterView),
     ## ! FOR STAFF ONLY.
     path("approve/<int:pk>/", approveProduct),

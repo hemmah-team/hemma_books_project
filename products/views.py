@@ -1,5 +1,3 @@
-import datetime
-
 from django.db.models import Q
 from django.http import QueryDict
 from rest_framework import status
@@ -62,24 +60,24 @@ def ListAllProducts(request):
         pass
 
     querysetFeatured = Product.objects.filter(
-        is_pending=False, buyer=None, is_featured=True
+        is_pending=False, is_featured=True
     ).order_by(
         "-created_at",
     )[:10]
     querysetFree = Product.objects.filter(
-        is_pending=False, buyer=None, process_info__method="donate"
+        is_pending=False, process_info__method="donate"
     ).order_by(
         "-created_at",
     )[:10]
 
     querysetPaid = Product.objects.filter(
-        is_pending=False, buyer=None, process_info__method="sell"
+        is_pending=False, process_info__method="sell"
     ).order_by(
         "-created_at",
     )[:10]
 
     querysetLend = Product.objects.filter(
-        is_pending=False, buyer=None, process_info__method="lend"
+        is_pending=False, process_info__method="lend"
     ).order_by(
         "-created_at",
     )[:10]
@@ -122,7 +120,9 @@ def fetchFavourites(request):
 
     for id in lst:
         try:
-            product = product_manager.get(id=id, buyer=None)
+            product = product_manager.get(
+                id=id,
+            )
             objects.append(product)
         except Product.DoesNotExist:
             pass
@@ -151,28 +151,7 @@ def fetchSingleProduct(request, pk):
         pass
     try:
         product = Product.objects.get(id=pk)
-        try:
-            same_user = product.seller.email == request.user.email
-        except:
-            try:
-                same_user = product.buyer.email == request.user.email
-            except:
-                same_user = False
-        if same_user is False:
-            if product.buyer is not None:
-                if product.buyer.email == request.user.email:
-                    same_user = True
-
-        if (product.buyer is not None) & (same_user is False):
-            return Response(
-                {"detail": "عذراً هذا المنتج غير متوفر."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-        if (product.is_pending is True) & (same_user is False):
-            return Response(
-                {"detail": "عذراً هذا المنتج غير متوفر."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+        same_user = product.seller.phone_number == user.phone_number
 
         if same_user is False:
             ## TODO: DO HERE MAKE SERIALIZER ALL EXCEPT USER, SELLER
@@ -298,57 +277,8 @@ def deleteProduct(request, pk):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
-        if product.buyer is not None:
-            return Response(
-                {
-                    "detail": "لا يمكنك حذف هذا المنتج.",
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
     product.delete()
     return Response({"detail": "تم حذف هذا المنتج بنجاح."})
-
-
-@api_view()
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
-def buyProduct(request, pk):
-    product = Product.objects.get(id=pk)
-    if product.buyer is not None:
-        return Response(
-            {
-                "detail": "تم شراء هذا المنتج مسبقاً.",
-            },
-            status=status.HTTP_403_FORBIDDEN,
-        )
-
-    if product.seller == request.user:
-        return Response(
-            {
-                "detail": "لا يمكنك شراء منتجك.",
-            },
-            status=status.HTTP_403_FORBIDDEN,
-        )
-
-    if product.is_pending:
-        return Response(
-            {
-                "detail": "المنتج ما زال في قائمة الانتظار.",
-            },
-            status=status.HTTP_403_FORBIDDEN,
-        )
-
-    product.buyer = request.user
-    product.got_at = datetime.datetime.now()
-
-    product.save()
-
-    ## TODO: SEND FCM NOTIFICATION
-    sendMessage(seller_user=product.seller, product=product)
-    ser = WholeProductSerializer(product)
-
-    return Response(ser.data)
 
 
 @api_view(["POST"])
@@ -389,7 +319,6 @@ def getInitital(request):
             )
 
     else:
-        ## user is anonymous
         return serializeInitialData(None)
 
 
@@ -480,7 +409,7 @@ def filterView(request):
     max_price = data.get("max_price", None)
 
     duration = data.get("duration", None)
-    filters = Q(is_pending=False, buyer=None)
+    filters = Q(is_pending=False)
     if is_featured:
         filters &= Q(is_featured=is_featured)
     if name:

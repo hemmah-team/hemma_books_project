@@ -324,7 +324,9 @@ def deleteAccount(request):
     password = request.data["password"]
     if user.check_password(password):
         Product.objects.filter(seller=user, is_pending=True).delete()
-        Product.objects.filter(seller=user, buyer=None).delete()
+        Product.objects.filter(
+            seller=user,
+        ).delete()
 
         user.delete()
         return Response({"detail": "تم حذف الحساب بنجاح."})
@@ -400,9 +402,7 @@ def loginView(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated, BanPermission, VerificationPermission])
 def fetchMyProducts(request):
-    products = Product.objects.filter(
-        Q(seller=request.user) | Q(buyer=request.user)
-    ).order_by(
+    products = Product.objects.filter(seller=request.user).order_by(
         "-created_at",
     )
     serializer = WholeProductSerializer(

@@ -105,10 +105,6 @@ def sendPrivateMessage(message: str, conversation_id: str, reciever_user: User):
                 "sent_date": str(datetime.now()),
                 "message": message,
             },
-            # notification=messaging.Notification(
-            #     title="رسالة خاصة",
-            #     body=message,
-            # ),
             token=token,
         )
         messaging.send(messag)

@@ -58,13 +58,6 @@ class Product(models.Model):
         null=True,
         blank=True,
     )
-    buyer = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="product_buyer",
-    )
 
     category = models.ManyToManyField(
         Category,
@@ -79,7 +72,6 @@ class Product(models.Model):
     is_featured = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    got_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return str(self.id) + " - " + self.name

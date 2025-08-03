@@ -103,7 +103,9 @@ class MiddleProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        exclude = ["seller", "buyer", "got_at"]
+        exclude = [
+            "seller",
+        ]
 
 
 ### ?? USED FOR BUY (RETURN DATA), PRODUCT SCREEN
@@ -114,7 +116,6 @@ class WholeProductSerializer(serializers.ModelSerializer):
     category = CategorySerializer(many=True)
     product_status = ProductStatusSerializer()
     seller = AccountSerializer()
-    buyer = AccountSerializer()
 
     class Meta:
         model = Product
