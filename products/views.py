@@ -15,7 +15,7 @@ from rest_framework.response import Response
 
 from account.models import NotificationSetting
 from account.serializers import NotificationSettingSerializer
-from firebase_messaging import sendMessage
+from firebase_messaging import sendApproveMessage
 from permissions import BanPermission, VerificationPermission
 
 from .models import AppVersion, Category, City, Product, ProductStatus
@@ -221,13 +221,6 @@ def editProduct(request, pk):
 
     product = Product.objects.get(pk=pk)
     if product.seller == request.user or request.user.is_staff:
-        if product.buyer is not None:
-            return Response(
-                {
-                    "detail": "لا يمكنك تعديل هذا المنتج.",
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
         serializer = UpdateProfileProductSerializer(product, data=tmp, partial=True)
         if serializer.is_valid():
             obj = serializer.save()
@@ -242,7 +235,7 @@ def editProduct(request, pk):
                 obj.save()
 
                 ## !! INFORM USER HERE VIA NOTIFICATION
-                sendMessage(seller_user=obj.seller, product=obj, isApprove=True)
+                sendApproveMessage(seller_user=obj.seller, product=obj)
 
             ser = WholeProductSerializer(obj)
             return Response(ser.data)
@@ -509,10 +502,9 @@ def approveProduct(request, pk):
         product.save()
 
         ## TODO: SEND FCM NOTIFICATION
-        sendMessage(
+        sendApproveMessage(
             seller_user=product.seller,
             product=product,
-            isApprove=True,
         )
 
         return Response({"detail": "تم قبول المنتج بنجاح."})

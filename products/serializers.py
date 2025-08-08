@@ -128,7 +128,6 @@ class UpdateProfileProductSerializer(serializers.ModelSerializer):
     university_info = UniversityInfoSerializer(allow_null=True)
     product_status = ProductStatusSerializer(read_only=True)
     seller = AccountSerializer()
-    buyer = AccountSerializer()
     image = Base64ImageField()
 
     class Meta:
@@ -149,7 +148,6 @@ class UpdateProfileProductSerializer(serializers.ModelSerializer):
             "is_featured",
             "pages",
             "seller",
-            "buyer",
             "is_pending",
         ]
         extra_kwargs = {

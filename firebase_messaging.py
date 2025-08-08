@@ -28,17 +28,11 @@ if not firebase_admin._apps:
     )
 
 
-def sendMessage(
+def sendApproveMessage(
     seller_user: User,
     product: Product,
-    isApprove: bool = False,
 ):
-    if isApprove:
-        m = f"لقد تم مراجعة والموافقة على منتجك ({product.name}). أصبح الآن متاحاً للجميع في متجرنا!"
-
-    else:
-        m = f"تم طلب منتجك ({product.name})"
-        m = f"قام ({product.buyer.name}) بـ (شراء/استعارة/الحصول على) منتجك ({product.name}). يرجى التواصل معه لتنسيق التسليم."
+    m = f"لقد تم مراجعة والموافقة على منتجك ({product.name}). أصبح الآن متاحاً للجميع في متجرنا!"
 
     try:
         notification_settings = seller_user.notification_settings.private is True
@@ -107,4 +101,5 @@ def sendPrivateMessage(message: str, conversation_id: str, reciever_user: User):
             },
             token=token,
         )
+        print(f"token is {token}")
         messaging.send(messag)

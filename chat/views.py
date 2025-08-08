@@ -20,9 +20,9 @@ from .serializers import ConversationSerializer, MessageSerializer
 def _createMessage(
     conversation, message, image, second_user, first_user, is_support=False
 ):
-    # 1 + ""
     ### TODO SEND FCM
     try:
+        print(f"first user is {first_user} and second user is {second_user}")
         ## TODO: CHANGE THIS TO FIRST_USER
         if first_user is not None:
             sendPrivateMessage(
@@ -166,12 +166,14 @@ def sendMessage(request):
     ## !! END OF NEW TEST FOR SENDING
 
     else:
+        ## !!! PROBLEM IS HEREE IN FIRST USER
         if conversation_id is not None:
             conversation = Conversation.objects.get(id=conversation_id)
-            if conversation.chatter.id == sender_user.id:
+            if sender_user == conversation.chatter:
                 first_user = conversation.product.seller
+
             else:
-                first_user = sender_user
+                first_user = conversation.chatter
 
             return _createMessage(
                 conversation=conversation,
